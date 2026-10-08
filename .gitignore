@@ -1,0 +1,7 @@
+# macOS
+.DS_Store
+
+# Local reference files (not for the shared repo)
+index-with-safety-patches.html
+index-backup-before-review.html
+*.html.bak

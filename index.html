@@ -132,6 +132,23 @@ main{padding-top:18px}
 .sugg:empty{display:none}
 .sugg button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 11px;font-size:13px;font-weight:600;color:var(--ink)}
 .sugg .new{font-size:12.5px;color:var(--ink3);align-self:center;padding:0 2px}
+.od-head h3{color:var(--pay)}
+.od-badge{display:inline-block;min-width:22px;padding:1px 7px;border-radius:99px;background:var(--pay);color:#fff;font-size:12px;font-weight:800;text-align:center;margin-left:6px;vertical-align:2px}
+.tag.od{background:var(--pay-soft);color:var(--pay);border-color:transparent}
+.tag.due{background:var(--parcel-soft);color:var(--parcel);border-color:transparent}
+.terms{margin-bottom:8px}
+.terms .chip{padding:6px 10px;font-size:13px}
+.chip-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.chip-row .chips{margin-bottom:0;flex:1}
+.xbtn{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 12px;font-weight:700;font-size:13.5px;color:var(--parcel);flex:none}
+.fmt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.fmt .btn{flex-direction:column;gap:2px;padding:14px 6px}
+.fmt .btn small{font-weight:500;font-size:12px;opacity:.7}
+.fx-btn{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:3px 10px;font-size:12.5px;font-weight:700;color:var(--parcel)}
+.fx-live{display:inline-block;width:7px;height:7px;border-radius:99px;background:var(--get);margin-right:2px}
+.daypick{display:flex;gap:6px;margin-top:6px}
+.daypick button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700;color:var(--ink2)}
+.daypick button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .qrow-act{display:flex;gap:6px;flex:none}
 .qrow-act button{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 10px;font-weight:700;font-size:13px}
 .qrow-act .ok{background:var(--parcel);border-color:var(--parcel);color:#fff}
@@ -241,6 +258,11 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
       </div>
     </div>
 
+    <div id="overdueSection" hidden>
+      <div class="section-t od-head"><h3>Overdue<span class="od-badge" id="odCount">0</span></h3><button class="link" data-export="overdue">Export</button></div>
+      <div class="list" id="overdueList"></div>
+    </div>
+
     <div id="quoteSection" hidden>
       <div class="section-t"><h3>Cards sent, waiting for yes</h3></div>
       <div class="list" id="quoteList"></div>
@@ -261,6 +283,7 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
       <button class="chip" data-f="get" aria-pressed="false">To receive</button>
       <button class="chip" data-f="pay" aria-pressed="false">To pay</button>
       <button class="chip" data-f="brok" aria-pressed="false">Brokerage due</button>
+      <button class="chip" data-f="od" aria-pressed="false">Overdue</button>
     </div>
     <div class="list" id="partyList"></div>
   </section>
@@ -268,10 +291,13 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
   <!-- ENTRIES -->
   <section class="view" id="v-entries">
     <input class="search" id="eSearch" placeholder="Search party, stone or note" autocomplete="off">
-    <div class="chips" id="eChips">
-      <button class="chip" data-f="all" aria-pressed="true">All</button>
-      <button class="chip" data-f="deal" aria-pressed="false">Deals</button>
-      <button class="chip" data-f="money" aria-pressed="false">Money</button>
+    <div class="chip-row">
+      <div class="chips" id="eChips">
+        <button class="chip" data-f="all" aria-pressed="true">All</button>
+        <button class="chip" data-f="deal" aria-pressed="false">Deals</button>
+        <button class="chip" data-f="money" aria-pressed="false">Money</button>
+      </div>
+      <button class="xbtn" data-export="deals">Export</button>
     </div>
     <div class="list" id="entryList"></div>
   </section>
@@ -292,6 +318,13 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
   <form class="sheet" id="dealForm" method="dialog" autocomplete="off">
     <div class="sheet-h"><h2 id="dealTitle">New deal</h2><button type="button" class="x" data-close aria-label="Close">×</button></div>
     <div class="sheet-b">
+      <div class="field">
+        <label for="d_date">Deal date</label>
+        <div class="two">
+          <input class="in" type="date" id="d_date">
+          <div class="daypick" data-for="d_date" style="margin-top:0;align-self:center"><button type="button" data-ago="0">Today</button><button type="button" data-ago="1">Yesterday</button></div>
+        </div>
+      </div>
       <div class="two">
         <div class="field"><label for="d_seller">Seller</label><input class="in upper" id="d_seller" placeholder="Who sold"></div>
         <div class="field"><label for="d_buyer">Buyer</label><input class="in upper" id="d_buyer" placeholder="Who bought"></div>
@@ -314,6 +347,13 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
         </div>
         <div class="hint" id="d_viaHint"></div>
       </div>
+      <div class="field">
+        <span class="lab">Payment due</span>
+        <div class="two">
+          <div><input class="in" id="d_days" inputmode="numeric" placeholder="Days" aria-label="Due in days"><div class="hint">days from deal date</div></div>
+          <div><input class="in" type="date" id="d_due" aria-label="Due date"><div class="hint" id="d_dueHint"></div></div>
+        </div>
+      </div>
       <div class="box">
         <span class="lab">Brokerage</span>
         <div class="two">
@@ -327,8 +367,7 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
         </div>
       </div>
       <div class="two">
-        <div class="field"><label for="d_stone">Stone (optional)</label><input class="in" id="d_stone" placeholder="1.02 F VVS2 Oval"></div>
-        <div class="field"><label for="d_date">Date</label><input class="in" type="date" id="d_date"></div>
+        <div class="field" style="grid-column:1/-1"><label for="d_stone">Stone (optional)</label><input class="in" id="d_stone" placeholder="1.02 F VVS2 Oval"></div>
       </div>
     </div>
     <div class="sheet-f">
@@ -350,9 +389,17 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
       </div>
       <div class="two">
         <div class="field"><label for="q_pct">Brokerage % from supplier</label><input class="in" id="q_pct" inputmode="decimal" placeholder="1"></div>
-        <div class="field"><span class="lab">Payment goes</span>
-          <div class="seg full" id="q_via"><button type="button" data-v="me" aria-pressed="true">Through me</button><button type="button" data-v="direct" aria-pressed="false">Direct</button></div>
+        <div class="field"><label for="q_terms">Payment due in (days)</label><input class="in" id="q_terms" inputmode="numeric" placeholder="30"><div class="hint" id="q_termsHint"></div></div>
+      </div>
+      <div class="field">
+        <label for="q_date">Deal date</label>
+        <div class="two">
+          <input class="in" type="date" id="q_date">
+          <div class="daypick" data-for="q_date" style="margin-top:0;align-self:center"><button type="button" data-ago="0">Today</button><button type="button" data-ago="1">Yesterday</button></div>
         </div>
+      </div>
+      <div class="field"><span class="lab">Payment goes</span>
+        <div class="seg full" id="q_via"><button type="button" data-v="me" aria-pressed="true">Through me</button><button type="button" data-v="direct" aria-pressed="false">Direct</button></div>
       </div>
       <span class="lab">Shape</span><div class="chips pick" id="q_shape"></div>
       <span class="lab">Colour</span><div class="chips pick" id="q_color"></div>
@@ -366,6 +413,7 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
         <div class="field"><label for="q_less">Less %</label><input class="in" id="q_less" inputmode="decimal" placeholder="0"></div>
         <div class="field"><label for="q_rate">₹ per $</label><input class="in" id="q_rate" inputmode="decimal" placeholder="95.74"></div>
       </div>
+      <div class="hint" id="q_rateHint" style="margin:-6px 0 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
       <div class="hint" id="q_discHint" style="margin:-4px 0 10px"></div>
       <img class="cardimg" id="q_card" alt="Price card preview">
     </div>
@@ -439,19 +487,58 @@ dialog::backdrop{background:rgba(8,15,28,.5)}
         <div class="field"><label for="s_pct">Default brokerage %</label><input class="in" id="s_pct" inputmode="decimal"></div>
         <div class="field"><label for="s_firm">Name on price card</label><input class="in" id="s_firm" placeholder="Your name or firm"></div>
       </div>
+      <div class="field"><label for="s_terms">Usual payment terms (days)</label><input class="in" id="s_terms" inputmode="numeric" placeholder="30" style="max-width:160px"><div class="hint">New deals get this due date. 0 = same day.</div></div>
       <div class="field"><span class="lab">Payment usually goes</span>
         <div class="seg full" id="s_via"><button type="button" data-v="me" aria-pressed="true">Through me</button><button type="button" data-v="direct" aria-pressed="false">Direct buyer → seller</button></div>
       </div>
       <div class="list">
-        <button class="row" id="mExcel"><div class="main"><div class="t">Download Excel</div><div class="s">Balances, deals and money in one file for your CA</div></div></button>
+        <button class="row" data-export="deals"><div class="main"><div class="t">Export deals or overdue</div><div class="s">Excel, CSV or PDF — pick period and format</div></div></button>
+        <button class="row" id="mExcel"><div class="main"><div class="t">Download full Excel</div><div class="s">Balances, deals and money in one file for your CA</div></div></button>
         <button class="row" id="mBackup"><div class="main"><div class="t">Download backup</div><div class="s">Keep this file safe. Data lives only on this device.</div></div></button>
         <button class="row" id="mRestore"><div class="main"><div class="t">Restore from backup</div><div class="s">Replaces everything on this device</div></div></button>
         <button class="row" id="mImport"><div class="main"><div class="t">Bring in old register data</div><div class="s">Copies purchases, sales and cash/bank entries from the previous app</div></div></button>
         <button class="row" id="mTheme"><div class="main"><div class="t">Switch light / dark</div></div></button>
         <button class="row" id="mWipe"><div class="main"><div class="t r">Erase all data</div></div></button>
       </div>
-      <p class="hint" style="text-align:center;margin-top:14px">Version 30 Sep 2026 · 8</p>
+      <p class="hint" style="text-align:center;margin-top:14px">Version 7 Oct 2026 · 12</p>
       <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+    </div>
+  </div>
+</dialog>
+
+<!-- EXPORT SHEET -->
+<dialog id="dlgExport">
+  <div class="sheet">
+    <div class="sheet-h"><h2>Export</h2><button type="button" class="x" data-close aria-label="Close">×</button></div>
+    <div class="sheet-b">
+      <span class="lab">What</span>
+      <div class="seg full" id="x_what" style="margin-bottom:12px">
+        <button type="button" data-v="deals" aria-pressed="true">Deals</button>
+        <button type="button" data-v="overdue" aria-pressed="false">Overdue</button>
+        <button type="button" data-v="outstanding" aria-pressed="false">All pending</button>
+      </div>
+      <div id="x_periodWrap">
+        <span class="lab">Period</span>
+        <div class="chips pick" id="x_period">
+          <button type="button" class="chip" data-v="month" aria-pressed="false">This month</button>
+          <button type="button" class="chip" data-v="last" aria-pressed="false">Last month</button>
+          <button type="button" class="chip" data-v="fy" aria-pressed="true">This FY</button>
+          <button type="button" class="chip" data-v="all" aria-pressed="false">All</button>
+          <button type="button" class="chip" data-v="custom" aria-pressed="false">Choose dates</button>
+        </div>
+        <div class="two" id="x_custom" hidden style="margin-bottom:10px">
+          <div><label class="lab" for="x_from">From</label><input class="in" type="date" id="x_from"></div>
+          <div><label class="lab" for="x_to">To</label><input class="in" type="date" id="x_to"></div>
+        </div>
+      </div>
+      <div class="box" id="x_summary" style="font-size:14px"></div>
+      <span class="lab">Download as</span>
+      <div class="fmt">
+        <button type="button" class="btn ghost" data-fmt="xlsx">Excel<small>.xlsx</small></button>
+        <button type="button" class="btn ghost" data-fmt="csv">CSV<small>.csv</small></button>
+        <button type="button" class="btn ghost" data-fmt="pdf">PDF<small>.pdf</small></button>
+      </div>
+      <div class="hint" style="margin-top:10px">PDF and Excel need internet the first time; after that they work offline.</div>
     </div>
   </div>
 </dialog>
@@ -504,13 +591,18 @@ document.querySelectorAll(".seg.full").forEach(function(seg){
   seg.addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; setSeg(seg.id, b.dataset.v); seg.dispatchEvent(new Event("change")); });
 });
 
+function iso(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function addDays(isoStr, n){ var d = new Date((isoStr || today()) + "T00:00:00"); d.setDate(d.getDate() + (n|0)); return iso(d); }
+function daysBetween(a, b){ return Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 864e5); }
+function dmy(isoStr){ return isoStr ? isoStr.slice(8,10) + "-" + isoStr.slice(5,7) + "-" + isoStr.slice(0,4) : ""; }
+
 /* ---------- storage ---------- */
 function normalize(s){
   s = s || {};
   s.deals = Array.isArray(s.deals) ? s.deals : [];
   s.money = Array.isArray(s.money) ? s.money : [];
   s.quotes = Array.isArray(s.quotes) ? s.quotes : [];
-  s.settings = Object.assign({ brokPct: 1, brokFrom: "seller", via: "me" }, s.settings || {});
+  s.settings = Object.assign({ brokPct: 1, brokFrom: "seller", via: "me", terms: 30 }, s.settings || {});
   return s;
 }
 function load(){
@@ -554,6 +646,57 @@ function books(){
   });
   return { parties: list, map: P, t: t };
 }
+/* What is still pending, deal by deal.
+   A party's payments clear their OLDEST deals first, so what is still pending is
+   always their most recent deals. Totals always match the party balance. */
+var DUES = [];
+function computeDues(B){
+  var res = [];
+  B.parties.forEach(function(p){
+    var name = p.name, recv = [], pay = [], brk = [];
+    S.deals.forEach(function(d){
+      if (d.via === "me"){
+        if (d.buyer === name) recv.push({ d:d, amt:d.buyerAmount });
+        if (d.seller === name) pay.push({ d:d, amt:d.amount });
+      }
+      if (d.seller === name && d.brokSeller) brk.push({ d:d, amt:d.brokSeller });
+      if (d.buyer === name && d.brokBuyer) brk.push({ d:d, amt:d.brokBuyer });
+    });
+    function alloc(bills, left, side){
+      bills.sort(function(a,b){ return b.d.date.localeCompare(a.d.date) || (b.d.ts||0) - (a.d.ts||0); });
+      bills.forEach(function(b){
+        if (left <= 0.5) return;
+        var o = Math.min(b.amt, left); left -= o;
+        var due = b.d.due || "";
+        res.push({ party:name, side:side, deal:b.d, amount:b.amt, out:r2(o), due:due, late: due ? daysBetween(due, today()) : null });
+      });
+      if (left > 0.5) res.push({ party:name, side:side, deal:null, amount:r2(left), out:r2(left), due:"", late:null });
+    }
+    alloc(recv, p.trade > 0.5 ? p.trade : 0, "get");
+    alloc(pay, p.trade < -0.5 ? -p.trade : 0, "pay");
+    alloc(brk, p.brokDue > 0.5 ? p.brokDue : 0, "brok");
+  });
+  return res;
+}
+function isOverdue(x){ return x.due && x.late > 0; }
+var SIDE = { get:"To receive", pay:"To pay", brok:"Brokerage due" };
+function overdueByParty(){
+  var m = {};
+  DUES.filter(isOverdue).forEach(function(x){
+    var k = x.party + "|" + x.side;
+    var g = m[k] || (m[k] = { party:x.party, side:x.side, out:0, n:0, late:0, due:x.due });
+    g.out += x.out; g.n++; if (x.late > g.late){ g.late = x.late; g.due = x.due; }
+  });
+  return Object.keys(m).map(function(k){ return m[k]; }).sort(function(a,b){ return b.late - a.late || b.out - a.out; });
+}
+function dealDueTag(d){
+  var od = 0, pend = false;
+  DUES.forEach(function(x){ if (x.deal === d){ pend = true; if (isOverdue(x) && x.late > od) od = x.late; } });
+  if (od) return '<span class="tag od">overdue ' + od + 'd</span>';
+  if (d.due && pend) return '<span class="tag due">due ' + fmtDate(d.due) + '</span>';
+  return "";
+}
+
 function brokTotals(period){
   var m = today().slice(0,7), inP = function(d){ return period === "all" || (d || "").slice(0,7) === m; };
   var e = 0, r = 0;
@@ -578,6 +721,7 @@ var period = "all", pFilter = "all", eFilter = "all";
 
 function render(){
   var B = books();
+  DUES = computeDues(B);
   renderQuotes();
   $("partyNames").innerHTML = partyNames().map(function(n){ return '<option value="' + esc(n) + '">'; }).join("");
 
@@ -586,6 +730,18 @@ function render(){
   $("dRecvSub").textContent = B.t.recvN ? B.t.recvN + (B.t.recvN === 1 ? " party owes you" : " parties owe you") : "Nobody owes you";
   $("dPay").textContent = inr(B.t.pay);
   $("dPaySub").textContent = B.t.payN ? "You owe " + B.t.payN + (B.t.payN === 1 ? " party" : " parties") : "You owe nobody";
+  var odGet = 0, odPay = 0;
+  DUES.forEach(function(x){ if (isOverdue(x)){ if (x.side === "get") odGet += x.out; else if (x.side === "pay") odPay += x.out; } });
+  if (odGet > 0.5) $("dRecvSub").innerHTML = esc($("dRecvSub").textContent) + ' · <b class="r">' + inr(odGet) + ' overdue</b>';
+  if (odPay > 0.5) $("dPaySub").innerHTML = esc($("dPaySub").textContent) + ' · <b class="r">' + inr(odPay) + ' overdue</b>';
+  var od = overdueByParty();
+  $("overdueSection").hidden = !od.length;
+  $("odCount").textContent = od.length;
+  $("overdueList").innerHTML = od.slice(0, 8).map(function(g){
+    return '<button class="row" data-party="' + esc(g.party) + '"><div class="avatar av-out">' + esc(initials(g.party)) + '</div>' +
+      '<div class="main"><div class="t">' + esc(g.party) + '</div><div class="s">' + SIDE[g.side] + ' · ' + g.n + (g.n === 1 ? " deal" : " deals") + ' · due ' + fmtDate(g.due) + '</div></div>' +
+      '<div class="amt ' + (g.side === "pay" ? "r" : g.side === "brok" ? "b" : "g") + '">' + inr(g.out) + '<small class="r">' + g.late + (g.late === 1 ? " day" : " days") + ' late</small></div></button>';
+  }).join("") + (od.length > 8 ? '<button class="row" data-goto-od="1"><div class="main"><div class="t b">See all ' + od.length + ' overdue</div></div></button>' : "");
 
   var bt = brokTotals(period);
   $("bEarned").textContent = inr(bt.earned);
@@ -643,7 +799,7 @@ function entryRow(e){
   if (e.k === "deal"){
     var d = e.o, br = (d.brokSeller||0) + (d.brokBuyer||0);
     var who = (d.seller || "—") + " → " + (d.buyer || "—");
-    var sub = [fmtDate(d.date)]; if (d.stone) sub.push(esc(d.stone)); if (d.via === "direct") sub.push('<span class="tag">direct</span>');
+    var sub = [fmtDate(d.date)]; var dt = dealDueTag(d); if (dt) sub.push(dt); if (d.stone) sub.push(esc(d.stone)); if (d.via === "direct") sub.push('<span class="tag">direct</span>');
     return '<button class="row" data-deal="' + d.id + '"><div class="avatar deal">◆</div><div class="main"><div class="t">' + esc(who) + '</div><div class="s">' + sub.join(" · ") + '</div></div>' +
       '<div class="amt">' + inr(d.amount) + '<small class="b">' + (br ? "Brok " + inr(br) : "No brokerage") + '</small></div></button>';
   }
@@ -663,6 +819,7 @@ function renderParties(B){
     if (pFilter === "get") return p.trade > 0.5;
     if (pFilter === "pay") return p.trade < -0.5;
     if (pFilter === "brok") return p.brokDue > 0.5;
+    if (pFilter === "od") return DUES.some(function(x){ return x.party === p.name && isOverdue(x); });
     return true;
   }).sort(function(a,b){
     if (pFilter === "brok") return b.brokDue - a.brokDue;
@@ -692,9 +849,11 @@ function go(view){
 }
 document.querySelector(".tabs").addEventListener("click", function(e){ var b = e.target.closest("button"); if (b) go(b.dataset.view); });
 document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-goto],[data-party],[data-deal],[data-money],[data-filter],[data-close],[data-quote],[data-qok],[data-qdrop]");
+  var t = e.target.closest("[data-export],[data-goto-od],[data-goto],[data-party],[data-deal],[data-money],[data-filter],[data-close],[data-quote],[data-qok],[data-qdrop]");
   if (!t) return;
   if (t.dataset.close !== undefined){ t.closest("dialog").close(); return; }
+  if (t.dataset.export){ openExport(t.dataset.export); return; }
+  if (t.dataset.gotoOd){ pFilter = "od"; setChips("pChips", "od"); go("parties"); render(); return; }
   if (t.dataset.goto) go(t.dataset.goto);
   else if (t.dataset.filter){ pFilter = t.dataset.filter; setChips("pChips", pFilter); go("parties"); render(); }
   else if (t.dataset.party) showParty(t.dataset.party);
@@ -732,7 +891,17 @@ function openDeal(d, preset){
   $("d_buyer").value = d ? d.buyer : (preset && preset.buyer) || "";
   $("d_amount").value = d ? d.amount : (preset && preset.amount) || "";
   $("d_stone").value = d ? (d.stone || "") : (preset && preset.stone) || "";
-  $("d_date").value = d ? d.date : today();
+  $("d_date").value = d ? d.date : (preset && preset.date) || today();
+  syncDayPick("d_date");
+  if (d){
+    $("d_due").value = d.due || "";
+    $("d_days").value = d.due ? Math.max(0, daysBetween(d.date, d.due)) : "";
+    dueHint();
+  } else {
+    var tdef = preset && preset.terms != null ? preset.terms : S.settings.terms;
+    $("d_days").value = (tdef === "" || tdef == null) ? "" : tdef;
+    daysToDue();
+  }
   var diff = d && Math.abs(d.buyerAmount - d.amount) > 0.5;
   $("d_buyerAmtWrap").hidden = !diff; $("d_buyerAmount").value = diff ? d.buyerAmount : "";
   buyerAmtManual = !!diff;
@@ -749,6 +918,31 @@ function openDeal(d, preset){
     f.focus();
   }, 30);
 }
+/* Due date: type any number of days, the date fills in (and the other way round) */
+var WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function dueLabel(isoStr){ var d = new Date(isoStr + "T00:00:00"); return WD[d.getDay()] + " " + fmtDate(isoStr); }
+function readDays(id){ var v = $(id).value.trim(); if (v === "") return null; var n = parseInt(v, 10); return isNaN(n) || n < 0 ? null : Math.min(n, 3650); }
+function daysToDue(){
+  var n = readDays("d_days");
+  $("d_due").value = n == null ? "" : addDays($("d_date").value || today(), n);
+  dueHint();
+}
+function dueToDays(){
+  var v = $("d_due").value;
+  $("d_days").value = v ? Math.max(0, daysBetween($("d_date").value || today(), v)) : "";
+  dueHint();
+}
+function dueHint(){
+  var v = $("d_due").value, h = $("d_dueHint");
+  if (!v){ h.textContent = "No due date"; h.className = "hint"; return; }
+  var n = daysBetween(today(), v);
+  h.className = n < 0 ? "hint warn" : "hint";
+  h.textContent = dueLabel(v) + (n > 0 ? " · in " + n + (n === 1 ? " day" : " days") : n === 0 ? " · today" : " · " + (-n) + " days late");
+}
+$("d_days").addEventListener("input", daysToDue);
+$("d_due").addEventListener("input", dueToDays);
+$("d_date").addEventListener("input", function(){ if (!$("d_date").value) $("d_date").value = today(); if (readDays("d_days") != null) daysToDue(); else dueHint(); });
+
 function dealAmounts(){
   var a = parseAmt($("d_amount").value);
   var ba = $("d_buyerAmtWrap").hidden || !$("d_buyerAmount").value.trim() ? a : parseAmt($("d_buyerAmount").value);
@@ -802,7 +996,8 @@ function saveDeal(another){
     amount: am.a, buyerAmount: buyer ? am.ba : 0, via: segVal("d_via"),
     brokPct: parseFloat($("d_pct").value) || 0, brokFrom: segVal("d_from"),
     brokSeller: seller ? br.s : 0, brokBuyer: buyer ? br.b : 0,
-    stone: $("d_stone").value.trim()
+    stone: $("d_stone").value.trim(),
+    due: $("d_due").value || "", dueDays: $("d_due").value ? readDays("d_days") : null
   });
   if (!editingDeal) S.deals.push(rec);
   if (!editingDeal && dealQuoteId){ S.quotes = S.quotes.filter(function(q){ return q.id !== dealQuoteId; }); dealQuoteId = null; }
@@ -961,10 +1156,18 @@ function renderParty(name){
   $("pBal").innerHTML =
     '<div><div class="k">' + (p.trade > 0.5 ? "To receive" : p.trade < -0.5 ? "To pay" : "Money") + '</div><div class="v ' + bal.cls + '">' + (bal.cls ? inr(Math.abs(p.trade)) : "Settled") + '</div></div>' +
     '<div><div class="k">Brokerage ' + (p.brokDue < -0.5 ? "extra" : "due") + '</div><div class="v b">' + inr(Math.abs(p.brokDue)) + '</div></div>';
+  var pod = DUES.filter(function(x){ return x.party === name && isOverdue(x); });
+  if (pod.length){
+    var sums = {}; pod.forEach(function(x){ sums[x.side] = (sums[x.side] || 0) + x.out; });
+    var oldest = pod.reduce(function(a,x){ return Math.max(a, x.late); }, 0);
+    $("pBal").innerHTML += '<div style="grid-column:1/-1;background:var(--pay-soft)"><div class="k r">Overdue · oldest ' + oldest + ' days</div><div class="v r" style="font-size:16px">' +
+      Object.keys(sums).map(function(k){ return SIDE[k] + " " + inr(sums[k]); }).join(" · ") + '</div></div>';
+  }
   var rows = partyLines(name).reverse();
   $("pLedger").innerHTML = rows.length ? rows.map(function(r){
     var sub = [fmtDate(r.date)]; if (r.s) sub.push(esc(r.s));
     if (r.k === "deal"){
+      var dd = S.deals.find(function(x){ return x.id === r.id; }); var tg = dd ? dealDueTag(dd) : ""; if (tg) sub.splice(1, 0, tg);
       if (r.brok) sub.push('<span class="b">brokerage ' + inr(r.brok) + '</span>');
       if (r.direct) sub.push('<span class="tag">direct</span>');
     } else if (r.brokIn) sub.push('<span class="b">' + (r.kind === "in" ? "incl. brokerage " : "brokerage cut ") + inr(r.brokIn) + '</span>');
@@ -983,6 +1186,11 @@ $("pShare").addEventListener("click", function(){
   else if (p.trade < -0.5) lines.push("Balance payable to you: " + inr(-p.trade));
   else lines.push("Balance: settled");
   if (p.brokDue > 0.5) lines.push("Brokerage due: " + inr(p.brokDue));
+  var odl = DUES.filter(function(x){ return x.party === openParty && isOverdue(x) && x.side !== "pay"; });
+  if (odl.length){
+    lines.push("", "*Overdue:*");
+    odl.forEach(function(x){ lines.push((x.side === "brok" ? "Brokerage " : "") + inr(x.out) + " · due " + fmtDate(x.due) + " (" + x.late + " days)" + (x.deal && x.deal.stone ? " · " + x.deal.stone : "")); });
+  }
   lines.push("", "Recent:");
   partyLines(openParty).reverse().slice(0, 10).forEach(function(r){
     lines.push(fmtDate(r.date) + " · " + r.t + (r.s && r.k === "deal" ? " (" + r.s + ")" : "") + " · " + inr(r.amt) + (r.brok ? " · brok " + inr(r.brok) : "") + (r.brokIn ? " · brok " + inr(r.brokIn) : ""));
@@ -995,7 +1203,13 @@ $("pShare").addEventListener("click", function(){
 /* ---------- menu: backup, export, import ---------- */
 $("s_firm").addEventListener("change", function(){ S.settings.firm = $("s_firm").value.trim(); save(); toast("Name on card saved."); });
 $("s_via").addEventListener("change", function(){ S.settings.via = segVal("s_via"); save(); toast(S.settings.via === "me" ? "New deals: payment through you." : "New deals: payment direct."); });
-$("menuBtn").addEventListener("click", function(){ setSeg("s_via", S.settings.via); $("s_pct").value = S.settings.brokPct; $("s_firm").value = S.settings.firm || ""; $("dlgMenu").showModal(); });
+$("s_terms").addEventListener("change", function(){
+  var v = $("s_terms").value.trim();
+  if (v === ""){ S.settings.terms = ""; save(); toast("New deals: no due date."); return; }
+  var n = parseInt(v, 10); if (isNaN(n) || n < 0) return;
+  S.settings.terms = n; save(); toast("New deals due in " + n + " days.");
+});
+$("menuBtn").addEventListener("click", function(){ $("s_terms").value = S.settings.terms; setSeg("s_via", S.settings.via); $("s_pct").value = S.settings.brokPct; $("s_firm").value = S.settings.firm || ""; $("dlgMenu").showModal(); });
 $("s_pct").addEventListener("change", function(){ var v = parseFloat($("s_pct").value); if (!isNaN(v) && v >= 0){ S.settings.brokPct = v; save(); toast("Default brokerage set to " + v + "%."); } });
 function download(name, blob){
   var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
@@ -1117,6 +1331,20 @@ $("dlgParty").addEventListener("close", function(){ openParty = null; });
   });
 });
 
+function syncDayPick(id){
+  var v = $(id).value, box = document.querySelector('.daypick[data-for="' + id + '"]');
+  if (box) box.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", String(v === addDays(today(), -(+b.dataset.ago)))); });
+}
+document.querySelectorAll(".daypick").forEach(function(box){
+  var id = box.dataset.for;
+  box.addEventListener("click", function(e){
+    var b = e.target.closest("button[data-ago]"); if (!b) return;
+    $(id).value = addDays(today(), -(+b.dataset.ago));
+    $(id).dispatchEvent(new Event("input"));
+  });
+  $(id).addEventListener("input", function(){ syncDayPick(id); });
+});
+
 /* ---------- party name suggestions (works on every phone browser) ---------- */
 function attachSuggest(id, after){
   var inp = $(id), box = document.createElement("div");
@@ -1151,6 +1379,206 @@ attachSuggest("q_buyer");
 attachSuggest("d_seller", function(){ $("d_buyer").focus(); });
 attachSuggest("d_buyer", function(){ $("d_amount").focus(); });
 attachSuggest("m_party", function(){ $("m_amount").focus(); });
+
+/* ---------- export: Excel / CSV / PDF ---------- */
+var xWhat = "deals", xPeriod = "fy", LIBS = {};
+function loadScript(src){
+  if (LIBS[src]) return LIBS[src];
+  return (LIBS[src] = new Promise(function(res, rej){
+    var el = document.createElement("script"); el.src = src; el.onload = res;
+    el.onerror = function(){ delete LIBS[src]; rej(new Error("load")); };
+    document.head.appendChild(el);
+  }));
+}
+function needXLSX(){ return window.XLSX ? Promise.resolve() : loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"); }
+function needPDF(){
+  return (window.jspdf ? Promise.resolve() : loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"))
+    .then(function(){ return window.jspdf && window.jspdf.jsPDF.API.autoTable ? null : loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"); });
+}
+function periodRange(p){
+  var t = today(), y = +t.slice(0,4), m = +t.slice(5,7);
+  if (p === "month") return [t.slice(0,8) + "01", t, "This month"];
+  if (p === "last") return [iso(new Date(y, m-2, 1)), iso(new Date(y, m-1, 0)), "Last month"];
+  if (p === "fy"){ var fy = m >= 4 ? y : y - 1; return [fy + "-04-01", (fy+1) + "-03-31", "FY " + fy + "-" + String(fy+1).slice(2)]; }
+  if (p === "custom"){ var f = $("x_from").value, to = $("x_to").value; return [f || "0000-00-00", to || "9999-12-31", (f ? dmy(f) : "start") + " to " + (to ? dmy(to) : "today")]; }
+  return ["0000-00-00", "9999-12-31", "All dates"];
+}
+function dealLabel(d){ return d ? (d.seller || "—") + " → " + (d.buyer || "—") : "Earlier balance"; }
+function buildExport(){
+  var firm = S.settings.firm || "Broker Book", made = stampNow();
+  if (xWhat === "deals"){
+    var r = periodRange(xPeriod);
+    var list = S.deals.filter(function(d){ return d.date >= r[0] && d.date <= r[1]; })
+      .sort(function(a,b){ return a.date.localeCompare(b.date) || (a.ts||0) - (b.ts||0); });
+    var t = { a:0, b:0, s:0, u:0 };
+    var rows = list.map(function(d){
+      var bt = (d.brokSeller||0) + (d.brokBuyer||0);
+      t.a += d.amount; t.b += d.buyerAmount || 0; t.s += d.brokSeller || 0; t.u += d.brokBuyer || 0;
+      return [dmy(d.date), d.seller || "", d.buyer || "", d.stone || "", r2(d.amount), r2(d.buyerAmount || 0), d.via === "me" ? "Through me" : "Direct", dmy(d.due), d.brokPct || 0, r2(d.brokSeller||0), r2(d.brokBuyer||0), r2(bt)];
+    });
+    return { name:"deals", title:"Deals — " + r[2], sub: firm + " · " + list.length + " deals · made " + made,
+      head:["Date","Seller","Buyer","Stone","Deal amount","Buyer pays","Payment","Due date","Brok %","Brok seller","Brok buyer","Brok total"],
+      rows: rows, num:[4,5,8,9,10,11],
+      foot: rows.length ? [["Total","","","",r2(t.a),r2(t.b),"","","",r2(t.s),r2(t.u),r2(t.s+t.u)]] : [],
+      summary: list.length + " deals · deal value " + inr(t.a) + " · brokerage " + inr(t.s + t.u) };
+  }
+  var only = xWhat === "overdue";
+  var items = DUES.filter(function(x){ return only ? isOverdue(x) : true; })
+    .sort(function(a,b){ return (b.late == null ? -1e9 : b.late) - (a.late == null ? -1e9 : a.late) || b.out - a.out; });
+  var sums = { get:0, pay:0, brok:0 };
+  var rows = items.map(function(x){
+    sums[x.side] += x.out;
+    var status = !x.due ? "No due date" : x.late > 0 ? x.late + " days late" : x.late === 0 ? "Due today" : "Due in " + (-x.late) + " days";
+    var row = [x.party, SIDE[x.side], x.deal ? dmy(x.deal.date) : "", dealLabel(x.deal), x.deal ? (x.deal.stone || "") : "", r2(x.amount), r2(x.out), dmy(x.due)];
+    row.push(only ? x.late : status);
+    return row;
+  });
+  var foot = [];
+  ["get","pay","brok"].forEach(function(k){ if (sums[k] > 0.5) foot.push(["Total " + SIDE[k].toLowerCase(), "", "", "", "", "", r2(sums[k]), "", ""]); });
+  return { name: only ? "overdue" : "pending", title: (only ? "Overdue payments" : "All pending payments") + " — as of " + dmy(today()),
+    sub: firm + " · " + items.length + " items · made " + made,
+    head:["Party","Type","Deal date","Deal","Stone","Bill amount","Pending","Due date", only ? "Days late" : "Status"],
+    rows: rows, num: only ? [5,6,8] : [5,6], foot: foot,
+    summary: items.length ? (["get","pay","brok"].filter(function(k){ return sums[k] > 0.5; }).map(function(k){ return SIDE[k] + " " + inr(sums[k]); }).join(" · ")) : (only ? "Nothing is overdue." : "Nothing is pending.") };
+}
+function stampNow(){ var d = new Date(); return dmy(iso(d)) + " " + d.toLocaleTimeString("en-IN", { hour:"numeric", minute:"2-digit", hour12:true }); }
+function openExport(what){
+  if ($("dlgMenu").open) $("dlgMenu").close();
+  xWhat = what || "deals"; setSeg("x_what", xWhat); exportUI();
+  $("dlgExport").showModal();
+}
+function exportUI(){
+  $("x_periodWrap").hidden = xWhat !== "deals";
+  $("x_period").querySelectorAll(".chip").forEach(function(c){ c.setAttribute("aria-pressed", String(c.dataset.v === xPeriod)); });
+  $("x_custom").hidden = xPeriod !== "custom";
+  var X = buildExport();
+  $("x_summary").innerHTML = '<b>' + esc(X.title) + '</b><br><span style="color:var(--ink2)">' + esc(X.summary) + '</span>';
+}
+$("x_what").addEventListener("change", function(){ xWhat = segVal("x_what"); exportUI(); });
+$("x_period").addEventListener("click", function(e){ var b = e.target.closest(".chip"); if (!b) return; xPeriod = b.dataset.v; exportUI(); });
+["x_from","x_to"].forEach(function(id){ $(id).addEventListener("input", exportUI); });
+function csvCell(v){ v = v == null ? "" : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function pdfText(v){ return String(v == null ? "" : v).replace(/→/g, "->").replace(/[—–]/g, "-").replace(/₹/g, "Rs ").replace(/[^\x00-\xFF]/g, ""); }
+function fmtNum(v, dec){ return typeof v === "number" ? v.toLocaleString("en-IN", { minimumFractionDigits: dec || 0, maximumFractionDigits: dec == null ? 2 : dec }) : v; }
+document.querySelector("#dlgExport .fmt").addEventListener("click", function(e){
+  var b = e.target.closest("[data-fmt]"); if (!b) return;
+  var fmt = b.dataset.fmt, X = buildExport();
+  if (!X.rows.length){ toast(xWhat === "deals" ? "No deals in this period." : X.summary); return; }
+  var base = "broker-book-" + X.name + "-" + today();
+  b.disabled = true;
+  var done = function(){ b.disabled = false; };
+  if (fmt === "csv"){
+    var lines = [[X.title], [X.sub], [], X.head].concat(X.rows, X.foot).map(function(r){ return r.map(csvCell).join(","); });
+    download(base + ".csv", new Blob(["\ufeff" + lines.join("\r\n")], { type:"text/csv" }));
+    done(); return;
+  }
+  if (fmt === "xlsx"){
+    needXLSX().then(function(){
+      var aoa = [[X.title], [X.sub], [], X.head].concat(X.rows, X.foot);
+      var ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws["!cols"] = X.head.map(function(h, i){ var w = h.length; X.rows.forEach(function(r){ w = Math.max(w, String(r[i] == null ? "" : r[i]).length); }); return { wch: Math.min(Math.max(w + 2, 8), 40) }; });
+      var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, X.name.charAt(0).toUpperCase() + X.name.slice(1));
+      download(base + ".xlsx", new Blob([XLSX.write(wb, { bookType:"xlsx", type:"array" })]));
+    }).catch(function(){ toast("Excel needs internet the first time. Try again online, or use CSV."); }).then(done);
+    return;
+  }
+  needPDF().then(function(){
+    var doc = new window.jspdf.jsPDF({ orientation:"landscape", unit:"pt", format:"a4" });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(15); doc.setTextColor(15, 30, 54); doc.text(pdfText(X.title), 36, 40);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(90, 105, 130); doc.text(pdfText(X.sub + "   ·   Amounts in Rs"), 36, 56);
+    var colStyles = {}; X.num.forEach(function(i){ colStyles[i] = { halign:"right" }; });
+    var fmtRow = function(r){ return r.map(function(v, i){ return pdfText(X.num.indexOf(i) >= 0 ? fmtNum(v) : v); }); };
+    doc.autoTable({
+      head: [X.head.map(pdfText)], body: X.rows.map(fmtRow), foot: X.foot.map(fmtRow), startY: 68,
+      theme: "grid", styles: { fontSize: 8, cellPadding: 4, lineColor: [224,230,239], lineWidth: 0.5, textColor: [15,30,54] },
+      headStyles: { fillColor: [15,30,54], textColor: 255, fontStyle: "bold" },
+      footStyles: { fillColor: [228,236,251], textColor: [22,53,127], fontStyle: "bold" },
+      columnStyles: colStyles, showFoot: "lastPage", margin: { left: 36, right: 36 },
+      didParseCell: function(h){ if (h.section === "foot" && X.num.indexOf(h.column.index) >= 0) h.cell.styles.halign = "right"; },
+      didDrawPage: function(){
+        var pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+        doc.setFontSize(8); doc.setTextColor(135, 147, 168);
+        doc.text(pdfText((S.settings.firm || "Broker Book") + " · page " + doc.internal.getNumberOfPages()), pw - 36, ph - 18, { align:"right" });
+      }
+    });
+    download(base + ".pdf", doc.output("blob"));
+  }).catch(function(){ toast("PDF needs internet the first time. Try again online, or use CSV."); }).then(done);
+});
+
+/* ---------- live USD → INR rate ----------
+   Two free sources, tried in order. Moneycontrol has no open feed that apps may read. */
+var FX_SOURCES = [
+  { name: "ExchangeRate-API", url: "https://open.er-api.com/v6/latest/USD", pick: function(j){ return j && j.rates && j.rates.INR; } },
+  { name: "Currency API",     url: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", pick: function(j){ return j && j.usd && j.usd.inr; } }
+];
+var FX_FRESH = 30 * 60 * 1000, fxBusy = null, fxState = "idle", qRateManual = false;
+function fetchFx(force){
+  var fx = S.settings.fx;
+  if (!force && fx && Date.now() - fx.at < FX_FRESH) return Promise.resolve(fx);
+  if (fxBusy) return fxBusy;
+  if (!window.fetch) return Promise.reject(new Error("fx"));
+  fxBusy = (function next(i){
+    if (i >= FX_SOURCES.length) return Promise.reject(new Error("fx"));
+    var src = FX_SOURCES[i], ctl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function(){ if (ctl) ctl.abort(); }, 6000);
+    return fetch(src.url, { cache: "no-store", signal: ctl ? ctl.signal : undefined })
+      .then(function(r){ if (!r.ok) throw new Error("http"); return r.json(); })
+      .then(function(j){
+        clearTimeout(timer);
+        var v = +src.pick(j);
+        if (!(v > 40 && v < 250)) throw new Error("bad");
+        S.settings.fx = { rate: Math.round(v * 100) / 100, at: Date.now(), src: src.name };
+        save();
+        return S.settings.fx;
+      })
+      .catch(function(){ clearTimeout(timer); return next(i + 1); });
+  })(0).then(function(x){ fxBusy = null; return x; }, function(e){ fxBusy = null; throw e; });
+  return fxBusy;
+}
+function fxAge(at){
+  var d = new Date(at), mins = Math.round((Date.now() - at) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + " min ago";
+  return iso(d) === today() ? "at " + clock(d) : fmtDate(iso(d)) + " " + clock(d);
+}
+function rateHint(){
+  var h = $("q_rateHint"), fx = S.settings.fx;
+  var refresh = '<button type="button" class="fx-btn" data-fx="refresh">↻ Refresh</button>';
+  if (fxState === "loading"){ h.innerHTML = "Getting today's dollar rate…"; return; }
+  if (qRateManual){
+    h.innerHTML = "Rate typed by you" + (fx ? ' <button type="button" class="fx-btn" data-fx="use">Use live ₹' + fx.rate + '</button>' : " " + refresh);
+    return;
+  }
+  if (fx && +$("q_rate").value === fx.rate){
+    var stale = Date.now() - fx.at > 6 * 3600 * 1000;
+    h.innerHTML = fxState === "failed"
+      ? '<span class="r">Offline</span> · last rate, fetched ' + fxAge(fx.at) + " " + refresh
+      : (stale ? "" : '<span class="fx-live"></span>') + "Live rate " + fxAge(fx.at) + " · " + esc(fx.src) + " " + refresh;
+    return;
+  }
+  h.innerHTML = (fxState === "failed" ? '<span class="r">Couldn\u2019t get the live rate.</span> Type it, or ' : "") + refresh;
+}
+function loadFx(force){
+  fxState = "loading"; rateHint();
+  fetchFx(force).then(function(fx){
+    fxState = "ok";
+    if ($("dlgQuote").open && !qRateManual){ $("q_rate").value = fx.rate; quoteUpdate(); }
+    rateHint();
+    if (force) toast("Dollar rate: ₹" + fx.rate);
+  }, function(){
+    fxState = "failed";
+    var fx = S.settings.fx;
+    if ($("dlgQuote").open && !qRateManual && fx && !$("q_rate").value){ $("q_rate").value = fx.rate; quoteUpdate(); }
+    rateHint();
+    if (force) toast("No internet — couldn't get the live rate.");
+  });
+}
+$("q_rate").addEventListener("input", function(){ qRateManual = $("q_rate").value.trim() !== ""; if (!qRateManual) fxState = "idle"; quoteUpdate(); rateHint(); });
+$("q_rateHint").addEventListener("click", function(e){
+  var b = e.target.closest("[data-fx]"); if (!b) return;
+  if (b.dataset.fx === "use" && S.settings.fx){ qRateManual = false; $("q_rate").value = S.settings.fx.rate; quoteUpdate(); rateHint(); return; }
+  qRateManual = false; loadFx(true);
+});
 
 /* ---------- price card ---------- */
 var RAP_DATA = [["ROUND","D","IF",0.3,0.39,3100],["ROUND","D","VVS1",0.3,0.39,2400],["ROUND","D","VVS2",0.3,0.39,2100],["ROUND","D","VS1",0.3,0.39,1900],["ROUND","D","VS2",0.3,0.39,1700],["ROUND","D","SI1",0.3,0.39,1500],["ROUND","D","SI2",0.3,0.39,1400],["ROUND","D","SI3",0.3,0.39,1300],["ROUND","D","I1",0.3,0.39,1200],["ROUND","D","I2",0.3,0.39,1100],["ROUND","D","I3",0.3,0.39,700],["ROUND","E","IF",0.3,0.39,2600],["ROUND","E","VVS1",0.3,0.39,2200],["ROUND","E","VVS2",0.3,0.39,1900],["ROUND","E","VS1",0.3,0.39,1700],["ROUND","E","VS2",0.3,0.39,1600],["ROUND","E","SI1",0.3,0.39,1400],["ROUND","E","SI2",0.3,0.39,1300],["ROUND","E","SI3",0.3,0.39,1200],["ROUND","E","I1",0.3,0.39,1100],["ROUND","E","I2",0.3,0.39,1000],["ROUND","E","I3",0.3,0.39,600],["ROUND","F","IF",0.3,0.39,2300],["ROUND","F","VVS1",0.3,0.39,2000],["ROUND","F","VVS2",0.3,0.39,1800],["ROUND","F","VS1",0.3,0.39,1600],["ROUND","F","VS2",0.3,0.39,1500],["ROUND","F","SI1",0.3,0.39,1300],["ROUND","F","SI2",0.3,0.39,1200],["ROUND","F","SI3",0.3,0.39,1100],["ROUND","F","I1",0.3,0.39,1100],["ROUND","F","I2",0.3,0.39,1000],["ROUND","F","I3",0.3,0.39,600],["ROUND","G","IF",0.3,0.39,2000],["ROUND","G","VVS1",0.3,0.39,1800],["ROUND","G","VVS2",0.3,0.39,1600],["ROUND","G","VS1",0.3,0.39,1500],["ROUND","G","VS2",0.3,0.39,1400],["ROUND","G","SI1",0.3,0.39,1300],["ROUND","G","SI2",0.3,0.39,1200],["ROUND","G","SI3",0.3,0.39,1100],["ROUND","G","I1",0.3,0.39,1000],["ROUND","G","I2",0.3,0.39,900],["ROUND","G","I3",0.3,0.39,500],["ROUND","H","IF",0.3,0.39,1700],["ROUND","H","VVS1",0.3,0.39,1600],["ROUND","H","VVS2",0.3,0.39,1500],["ROUND","H","VS1",0.3,0.39,1400],["ROUND","H","VS2",0.3,0.39,1300],["ROUND","H","SI1",0.3,0.39,1200],["ROUND","H","SI2",0.3,0.39,1100],["ROUND","H","SI3",0.3,0.39,1000],["ROUND","H","I1",0.3,0.39,900],["ROUND","H","I2",0.3,0.39,800],["ROUND","H","I3",0.3,0.39,500],["ROUND","I","IF",0.3,0.39,1500],["ROUND","I","VVS1",0.3,0.39,1400],["ROUND","I","VVS2",0.3,0.39,1300],["ROUND","I","VS1",0.3,0.39,1200],["ROUND","I","VS2",0.3,0.39,1100],["ROUND","I","SI1",0.3,0.39,1100],["ROUND","I","SI2",0.3,0.39,1000],["ROUND","I","SI3",0.3,0.39,900],["ROUND","I","I1",0.3,0.39,800],["ROUND","I","I2",0.3,0.39,700],["ROUND","I","I3",0.3,0.39,500],["ROUND","J","IF",0.3,0.39,1300],["ROUND","J","VVS1",0.3,0.39,1200],["ROUND","J","VVS2",0.3,0.39,1100],["ROUND","J","VS1",0.3,0.39,1100],["ROUND","J","VS2",0.3,0.39,1000],["ROUND","J","SI1",0.3,0.39,1000],["ROUND","J","SI2",0.3,0.39,1000],["ROUND","J","SI3",0.3,0.39,900],["ROUND","J","I1",0.3,0.39,800],["ROUND","J","I2",0.3,0.39,700],["ROUND","J","I3",0.3,0.39,400],["ROUND","K","IF",0.3,0.39,1200],["ROUND","K","VVS1",0.3,0.39,1100],["ROUND","K","VVS2",0.3,0.39,1000],["ROUND","K","VS1",0.3,0.39,900],["ROUND","K","VS2",0.3,0.39,900],["ROUND","K","SI1",0.3,0.39,900],["ROUND","K","SI2",0.3,0.39,900],["ROUND","K","SI3",0.3,0.39,800],["ROUND","K","I1",0.3,0.39,700],["ROUND","K","I2",0.3,0.39,600],["ROUND","K","I3",0.3,0.39,400],["ROUND","L","IF",0.3,0.39,1100],["ROUND","L","VVS1",0.3,0.39,1000],["ROUND","L","VVS2",0.3,0.39,900],["ROUND","L","VS1",0.3,0.39,800],["ROUND","L","VS2",0.3,0.39,800],["ROUND","L","SI1",0.3,0.39,800],["ROUND","L","SI2",0.3,0.39,800],["ROUND","L","SI3",0.3,0.39,700],["ROUND","L","I1",0.3,0.39,600],["ROUND","L","I2",0.3,0.39,500],["ROUND","L","I3",0.3,0.39,300],["ROUND","M","IF",0.3,0.39,1000],["ROUND","M","VVS1",0.3,0.39,900],["ROUND","M","VVS2",0.3,0.39,900],["ROUND","M","VS1",0.3,0.39,800],["ROUND","M","VS2",0.3,0.39,800],["ROUND","M","SI1",0.3,0.39,800],["ROUND","M","SI2",0.3,0.39,700],["ROUND","M","SI3",0.3,0.39,600],["ROUND","M","I1",0.3,0.39,500],["ROUND","M","I2",0.3,0.39,400],["ROUND","M","I3",0.3,0.39,300],["ROUND","D","IF",0.4,0.49,3500],["ROUND","D","VVS1",0.4,0.49,2800],["ROUND","D","VVS2",0.4,0.49,2400],["ROUND","D","VS1",0.4,0.49,2200],["ROUND","D","VS2",0.4,0.49,2000],["ROUND","D","SI1",0.4,0.49,1800],["ROUND","D","SI2",0.4,0.49,1600],["ROUND","D","SI3",0.4,0.49,1500],["ROUND","D","I1",0.4,0.49,1400],["ROUND","D","I2",0.4,0.49,1200],["ROUND","D","I3",0.4,0.49,800],["ROUND","E","IF",0.4,0.49,2900],["ROUND","E","VVS1",0.4,0.49,2500],["ROUND","E","VVS2",0.4,0.49,2200],["ROUND","E","VS1",0.4,0.49,2000],["ROUND","E","VS2",0.4,0.49,1900],["ROUND","E","SI1",0.4,0.49,1700],["ROUND","E","SI2",0.4,0.49,1500],["ROUND","E","SI3",0.4,0.49,1400],["ROUND","E","I1",0.4,0.49,1300],["ROUND","E","I2",0.4,0.49,1100],["ROUND","E","I3",0.4,0.49,700],["ROUND","F","IF",0.4,0.49,2600],["ROUND","F","VVS1",0.4,0.49,2300],["ROUND","F","VVS2",0.4,0.49,2100],["ROUND","F","VS1",0.4,0.49,1900],["ROUND","F","VS2",0.4,0.49,1800],["ROUND","F","SI1",0.4,0.49,1600],["ROUND","F","SI2",0.4,0.49,1400],["ROUND","F","SI3",0.4,0.49,1300],["ROUND","F","I1",0.4,0.49,1200],["ROUND","F","I2",0.4,0.49,1100],["ROUND","F","I3",0.4,0.49,700],["ROUND","G","IF",0.4,0.49,2300],["ROUND","G","VVS1",0.4,0.49,2000],["ROUND","G","VVS2",0.4,0.49,1900],["ROUND","G","VS1",0.4,0.49,1800],["ROUND","G","VS2",0.4,0.49,1700],["ROUND","G","SI1",0.4,0.49,1500],["ROUND","G","SI2",0.4,0.49,1300],["ROUND","G","SI3",0.4,0.49,1200],["ROUND","G","I1",0.4,0.49,1100],["ROUND","G","I2",0.4,0.49,1000],["ROUND","G","I3",0.4,0.49,600],["ROUND","H","IF",0.4,0.49,2000],["ROUND","H","VVS1",0.4,0.49,1800],["ROUND","H","VVS2",0.4,0.49,1700],["ROUND","H","VS1",0.4,0.49,1600],["ROUND","H","VS2",0.4,0.49,1500],["ROUND","H","SI1",0.4,0.49,1400],["ROUND","H","SI2",0.4,0.49,1200],["ROUND","H","SI3",0.4,0.49,1100],["ROUND","H","I1",0.4,0.49,1000],["ROUND","H","I2",0.4,0.49,900],["ROUND","H","I3",0.4,0.49,600],["ROUND","I","IF",0.4,0.49,1800],["ROUND","I","VVS1",0.4,0.49,1600],["ROUND","I","VVS2",0.4,0.49,1500],["ROUND","I","VS1",0.4,0.49,1400],["ROUND","I","VS2",0.4,0.49,1300],["ROUND","I","SI1",0.4,0.49,1200],["ROUND","I","SI2",0.4,0.49,1100],["ROUND","I","SI3",0.4,0.49,1000],["ROUND","I","I1",0.4,0.49,900],["ROUND","I","I2",0.4,0.49,800],["ROUND","I","I3",0.4,0.49,600],["ROUND","J","IF",0.4,0.49,1600],["ROUND","J","VVS1",0.4,0.49,1400],["ROUND","J","VVS2",0.4,0.49,1300],["ROUND","J","VS1",0.4,0.49,1300],["ROUND","J","VS2",0.4,0.49,1200],["ROUND","J","SI1",0.4,0.49,1100],["ROUND","J","SI2",0.4,0.49,1100],["ROUND","J","SI3",0.4,0.49,1000],["ROUND","J","I1",0.4,0.49,900],["ROUND","J","I2",0.4,0.49,800],["ROUND","J","I3",0.4,0.49,500],["ROUND","K","IF",0.4,0.49,1400],["ROUND","K","VVS1",0.4,0.49,1300],["ROUND","K","VVS2",0.4,0.49,1200],["ROUND","K","VS1",0.4,0.49,1100],["ROUND","K","VS2",0.4,0.49,1100],["ROUND","K","SI1",0.4,0.49,1000],["ROUND","K","SI2",0.4,0.49,1000],["ROUND","K","SI3",0.4,0.49,900],["ROUND","K","I1",0.4,0.49,800],["ROUND","K","I2",0.4,0.49,700],["ROUND","K","I3",0.4,0.49,500],["ROUND","L","IF",0.4,0.49,1300],["ROUND","L","VVS1",0.4,0.49,1200],["ROUND","L","VVS2",0.4,0.49,1100],["ROUND","L","VS1",0.4,0.49,1000],["ROUND","L","VS2",0.4,0.49,1000],["ROUND","L","SI1",0.4,0.49,900],["ROUND","L","SI2",0.4,0.49,900],["ROUND","L","SI3",0.4,0.49,800],["ROUND","L","I1",0.4,0.49,700],["ROUND","L","I2",0.4,0.49,600],["ROUND","L","I3",0.4,0.49,400],["ROUND","M","IF",0.4,0.49,1200],["ROUND","M","VVS1",0.4,0.49,1100],["ROUND","M","VVS2",0.4,0.49,1000],["ROUND","M","VS1",0.4,0.49,900],["ROUND","M","VS2",0.4,0.49,900],["ROUND","M","SI1",0.4,0.49,900],["ROUND","M","SI2",0.4,0.49,800],["ROUND","M","SI3",0.4,0.49,700],["ROUND","M","I1",0.4,0.49,600],["ROUND","M","I2",0.4,0.49,500],["ROUND","M","I3",0.4,0.49,400],["ROUND","D","IF",0.5,0.69,5500],["ROUND","D","VVS1",0.5,0.69,4400],["ROUND","D","VVS2",0.5,0.69,3400],["ROUND","D","VS1",0.5,0.69,2800],["ROUND","D","VS2",0.5,0.69,2500],["ROUND","D","SI1",0.5,0.69,2200],["ROUND","D","SI2",0.5,0.69,1800],["ROUND","D","SI3",0.5,0.69,1600],["ROUND","D","I1",0.5,0.69,1500],["ROUND","D","I2",0.5,0.69,1400],["ROUND","D","I3",0.5,0.69,1100],["ROUND","E","IF",0.5,0.69,4400],["ROUND","E","VVS1",0.5,0.69,3800],["ROUND","E","VVS2",0.5,0.69,3100],["ROUND","E","VS1",0.5,0.69,2600],["ROUND","E","VS2",0.5,0.69,2300],["ROUND","E","SI1",0.5,0.69,2000],["ROUND","E","SI2",0.5,0.69,1700],["ROUND","E","SI3",0.5,0.69,1500],["ROUND","E","I1",0.5,0.69,1400],["ROUND","E","I2",0.5,0.69,1300],["ROUND","E","I3",0.5,0.69,1000],["ROUND","F","IF",0.5,0.69,3800],["ROUND","F","VVS1",0.5,0.69,3300],["ROUND","F","VVS2",0.5,0.69,2800],["ROUND","F","VS1",0.5,0.69,2400],["ROUND","F","VS2",0.5,0.69,2200],["ROUND","F","SI1",0.5,0.69,1900],["ROUND","F","SI2",0.5,0.69,1600],["ROUND","F","SI3",0.5,0.69,1400],["ROUND","F","I1",0.5,0.69,1300],["ROUND","F","I2",0.5,0.69,1200],["ROUND","F","I3",0.5,0.69,1000],["ROUND","G","IF",0.5,0.69,3200],["ROUND","G","VVS1",0.5,0.69,2800],["ROUND","G","VVS2",0.5,0.69,2500],["ROUND","G","VS1",0.5,0.69,2300],["ROUND","G","VS2",0.5,0.69,2100],["ROUND","G","SI1",0.5,0.69,1800],["ROUND","G","SI2",0.5,0.69,1500],["ROUND","G","SI3",0.5,0.69,1300],["ROUND","G","I1",0.5,0.69,1200],["ROUND","G","I2",0.5,0.69,1100],["ROUND","G","I3",0.5,0.69,900],["ROUND","H","IF",0.5,0.69,2600],["ROUND","H","VVS1",0.5,0.69,2300],["ROUND","H","VVS2",0.5,0.69,2200],["ROUND","H","VS1",0.5,0.69,2100],["ROUND","H","VS2",0.5,0.69,2000],["ROUND","H","SI1",0.5,0.69,1700],["ROUND","H","SI2",0.5,0.69,1400],["ROUND","H","SI3",0.5,0.69,1200],["ROUND","H","I1",0.5,0.69,1100],["ROUND","H","I2",0.5,0.69,1100],["ROUND","H","I3",0.5,0.69,800],["ROUND","I","IF",0.5,0.69,2300],["ROUND","I","VVS1",0.5,0.69,2000],["ROUND","I","VVS2",0.5,0.69,1900],["ROUND","I","VS1",0.5,0.69,1800],["ROUND","I","VS2",0.5,0.69,1700],["ROUND","I","SI1",0.5,0.69,1500],["ROUND","I","SI2",0.5,0.69,1300],["ROUND","I","SI3",0.5,0.69,1100],["ROUND","I","I1",0.5,0.69,1000],["ROUND","I","I2",0.5,0.69,1000],["ROUND","I","I3",0.5,0.69,800],["ROUND","J","IF",0.5,0.69,1900],["ROUND","J","VVS1",0.5,0.69,1700],["ROUND","J","VVS2",0.5,0.69,1600],["ROUND","J","VS1",0.5,0.69,1500],["ROUND","J","VS2",0.5,0.69,1400],["ROUND","J","SI1",0.5,0.69,1300],["ROUND","J","SI2",0.5,0.69,1200],["ROUND","J","SI3",0.5,0.69,1100],["ROUND","J","I1",0.5,0.69,1000],["ROUND","J","I2",0.5,0.69,1000],["ROUND","J","I3",0.5,0.69,700],["ROUND","K","IF",0.5,0.69,1600],["ROUND","K","VVS1",0.5,0.69,1500],["ROUND","K","VVS2",0.5,0.69,1400],["ROUND","K","VS1",0.5,0.69,1300],["ROUND","K","VS2",0.5,0.69,1200],["ROUND","K","SI1",0.5,0.69,1200],["ROUND","K","SI2",0.5,0.69,1100],["ROUND","K","SI3",0.5,0.69,1000],["ROUND","K","I1",0.5,0.69,900],["ROUND","K","I2",0.5,0.69,900],["ROUND","K","I3",0.5,0.69,700],["ROUND","L","IF",0.5,0.69,1500],["ROUND","L","VVS1",0.5,0.69,1400],["ROUND","L","VVS2",0.5,0.69,1300],["ROUND","L","VS1",0.5,0.69,1200],["ROUND","L","VS2",0.5,0.69,1100],["ROUND","L","SI1",0.5,0.69,1100],["ROUND","L","SI2",0.5,0.69,1000],["ROUND","L","SI3",0.5,0.69,1000],["ROUND","L","I1",0.5,0.69,900],["ROUND","L","I2",0.5,0.69,800],["ROUND","L","I3",0.5,0.69,600],["ROUND","M","IF",0.5,0.69,1400],["ROUND","M","VVS1",0.5,0.69,1300],["ROUND","M","VVS2",0.5,0.69,1200],["ROUND","M","VS1",0.5,0.69,1100],["ROUND","M","VS2",0.5,0.69,1000],["ROUND","M","SI1",0.5,0.69,1000],["ROUND","M","SI2",0.5,0.69,900],["ROUND","M","SI3",0.5,0.69,900],["ROUND","M","I1",0.5,0.69,900],["ROUND","M","I2",0.5,0.69,700],["ROUND","M","I3",0.5,0.69,500],["ROUND","D","IF",0.7,0.89,7000],["ROUND","D","VVS1",0.7,0.89,5600],["ROUND","D","VVS2",0.7,0.89,4400],["ROUND","D","VS1",0.7,0.89,3800],["ROUND","D","VS2",0.7,0.89,3300],["ROUND","D","SI1",0.7,0.89,2900],["ROUND","D","SI2",0.7,0.89,2500],["ROUND","D","SI3",0.7,0.89,2300],["ROUND","D","I1",0.7,0.89,2100],["ROUND","D","I2",0.7,0.89,1900],["ROUND","D","I3",0.7,0.89,1200],["ROUND","E","IF",0.7,0.89,5700],["ROUND","E","VVS1",0.7,0.89,4900],["ROUND","E","VVS2",0.7,0.89,4100],["ROUND","E","VS1",0.7,0.89,3600],["ROUND","E","VS2",0.7,0.89,3100],["ROUND","E","SI1",0.7,0.89,2700],["ROUND","E","SI2",0.7,0.89,2300],["ROUND","E","SI3",0.7,0.89,2100],["ROUND","E","I1",0.7,0.89,1900],["ROUND","E","I2",0.7,0.89,1800],["ROUND","E","I3",0.7,0.89,1100],["ROUND","F","IF",0.7,0.89,5000],["ROUND","F","VVS1",0.7,0.89,4400],["ROUND","F","VVS2",0.7,0.89,3900],["ROUND","F","VS1",0.7,0.89,3400],["ROUND","F","VS2",0.7,0.89,2900],["ROUND","F","SI1",0.7,0.89,2500],["ROUND","F","SI2",0.7,0.89,2100],["ROUND","F","SI3",0.7,0.89,1900],["ROUND","F","I1",0.7,0.89,1800],["ROUND","F","I2",0.7,0.89,1700],["ROUND","F","I3",0.7,0.89,1100],["ROUND","G","IF",0.7,0.89,4200],["ROUND","G","VVS1",0.7,0.89,3700],["ROUND","G","VVS2",0.7,0.89,3400],["ROUND","G","VS1",0.7,0.89,3100],["ROUND","G","VS2",0.7,0.89,2700],["ROUND","G","SI1",0.7,0.89,2300],["ROUND","G","SI2",0.7,0.89,2000],["ROUND","G","SI3",0.7,0.89,1800],["ROUND","G","I1",0.7,0.89,1700],["ROUND","G","I2",0.7,0.89,1600],["ROUND","G","I3",0.7,0.89,1000],["ROUND","H","IF",0.7,0.89,3400],["ROUND","H","VVS1",0.7,0.89,3000],["ROUND","H","VVS2",0.7,0.89,2800],["ROUND","H","VS1",0.7,0.89,2600],["ROUND","H","VS2",0.7,0.89,2400],["ROUND","H","SI1",0.7,0.89,2100],["ROUND","H","SI2",0.7,0.89,1800],["ROUND","H","SI3",0.7,0.89,1700],["ROUND","H","I1",0.7,0.89,1600],["ROUND","H","I2",0.7,0.89,1500],["ROUND","H","I3",0.7,0.89,900],["ROUND","I","IF",0.7,0.89,2900],["ROUND","I","VVS1",0.7,0.89,2600],["ROUND","I","VVS2",0.7,0.89,2400],["ROUND","I","VS1",0.7,0.89,2300],["ROUND","I","VS2",0.7,0.89,2100],["ROUND","I","SI1",0.7,0.89,1800],["ROUND","I","SI2",0.7,0.89,1600],["ROUND","I","SI3",0.7,0.89,1500],["ROUND","I","I1",0.7,0.89,1400],["ROUND","I","I2",0.7,0.89,1400],["ROUND","I","I3",0.7,0.89,900],["ROUND","J","IF",0.7,0.89,2400],["ROUND","J","VVS1",0.7,0.89,2200],["ROUND","J","VVS2",0.7,0.89,2000],["ROUND","J","VS1",0.7,0.89,1900],["ROUND","J","VS2",0.7,0.89,1800],["ROUND","J","SI1",0.7,0.89,1700],["ROUND","J","SI2",0.7,0.89,1500],["ROUND","J","SI3",0.7,0.89,1400],["ROUND","J","I1",0.7,0.89,1300],["ROUND","J","I2",0.7,0.89,1300],["ROUND","J","I3",0.7,0.89,800],["ROUND","K","IF",0.7,0.89,2200],["ROUND","K","VVS1",0.7,0.89,2000],["ROUND","K","VVS2",0.7,0.89,1800],["ROUND","K","VS1",0.7,0.89,1700],["ROUND","K","VS2",0.7,0.89,1600],["ROUND","K","SI1",0.7,0.89,1500],["ROUND","K","SI2",0.7,0.89,1400],["ROUND","K","SI3",0.7,0.89,1300],["ROUND","K","I1",0.7,0.89,1200],["ROUND","K","I2",0.7,0.89,1100],["ROUND","K","I3",0.7,0.89,800],["ROUND","L","IF",0.7,0.89,2000],["ROUND","L","VVS1",0.7,0.89,1800],["ROUND","L","VVS2",0.7,0.89,1600],["ROUND","L","VS1",0.7,0.89,1500],["ROUND","L","VS2",0.7,0.89,1400],["ROUND","L","SI1",0.7,0.89,1300],["ROUND","L","SI2",0.7,0.89,1200],["ROUND","L","SI3",0.7,0.89,1200],["ROUND","L","I1",0.7,0.89,1200],["ROUND","L","I2",0.7,0.89,900],["ROUND","L","I3",0.7,0.89,700],["ROUND","M","IF",0.7,0.89,1800],["ROUND","M","VVS1",0.7,0.89,1600],["ROUND","M","VVS2",0.7,0.89,1400],["ROUND","M","VS1",0.7,0.89,1300],["ROUND","M","VS2",0.7,0.89,1200],["ROUND","M","SI1",0.7,0.89,1200],["ROUND","M","SI2",0.7,0.89,1100],["ROUND","M","SI3",0.7,0.89,1100],["ROUND","M","I1",0.7,0.89,1100],["ROUND","M","I2",0.7,0.89,800],["ROUND","M","I3",0.7,0.89,600],["ROUND","D","IF",0.9,0.99,10400],["ROUND","D","VVS1",0.9,0.99,8900],["ROUND","D","VVS2",0.9,0.99,6700],["ROUND","D","VS1",0.9,0.99,5700],["ROUND","D","VS2",0.9,0.99,4900],["ROUND","D","SI1",0.9,0.99,4000],["ROUND","D","SI2",0.9,0.99,3200],["ROUND","D","SI3",0.9,0.99,2800],["ROUND","D","I1",0.9,0.99,2700],["ROUND","D","I2",0.9,0.99,2200],["ROUND","D","I3",0.9,0.99,1500],["ROUND","E","IF",0.9,0.99,9000],["ROUND","E","VVS1",0.9,0.99,7700],["ROUND","E","VVS2",0.9,0.99,6200],["ROUND","E","VS1",0.9,0.99,5200],["ROUND","E","VS2",0.9,0.99,4500],["ROUND","E","SI1",0.9,0.99,3600],["ROUND","E","SI2",0.9,0.99,2900],["ROUND","E","SI3",0.9,0.99,2600],["ROUND","E","I1",0.9,0.99,2500],["ROUND","E","I2",0.9,0.99,2100],["ROUND","E","I3",0.9,0.99,1400],["ROUND","F","IF",0.9,0.99,8200],["ROUND","F","VVS1",0.9,0.99,7100],["ROUND","F","VVS2",0.9,0.99,5700],["ROUND","F","VS1",0.9,0.99,4800],["ROUND","F","VS2",0.9,0.99,4200],["ROUND","F","SI1",0.9,0.99,3400],["ROUND","F","SI2",0.9,0.99,2600],["ROUND","F","SI3",0.9,0.99,2400],["ROUND","F","I1",0.9,0.99,2300],["ROUND","F","I2",0.9,0.99,2000],["ROUND","F","I3",0.9,0.99,1300],["ROUND","G","IF",0.9,0.99,6500],["ROUND","G","VVS1",0.9,0.99,5700],["ROUND","G","VVS2",0.9,0.99,4900],["ROUND","G","VS1",0.9,0.99,4300],["ROUND","G","VS2",0.9,0.99,3900],["ROUND","G","SI1",0.9,0.99,3100],["ROUND","G","SI2",0.9,0.99,2500],["ROUND","G","SI3",0.9,0.99,2300],["ROUND","G","I1",0.9,0.99,2200],["ROUND","G","I2",0.9,0.99,1900],["ROUND","G","I3",0.9,0.99,1200],["ROUND","H","IF",0.9,0.99,5000],["ROUND","H","VVS1",0.9,0.99,4600],["ROUND","H","VVS2",0.9,0.99,4200],["ROUND","H","VS1",0.9,0.99,3700],["ROUND","H","VS2",0.9,0.99,3400],["ROUND","H","SI1",0.9,0.99,2900],["ROUND","H","SI2",0.9,0.99,2400],["ROUND","H","SI3",0.9,0.99,2300],["ROUND","H","I1",0.9,0.99,2200],["ROUND","H","I2",0.9,0.99,1800],["ROUND","H","I3",0.9,0.99,1200],["ROUND","I","IF",0.9,0.99,4500],["ROUND","I","VVS1",0.9,0.99,4100],["ROUND","I","VVS2",0.9,0.99,3700],["ROUND","I","VS1",0.9,0.99,3300],["ROUND","I","VS2",0.9,0.99,3000],["ROUND","I","SI1",0.9,0.99,2600],["ROUND","I","SI2",0.9,0.99,2200],["ROUND","I","SI3",0.9,0.99,2100],["ROUND","I","I1",0.9,0.99,2000],["ROUND","I","I2",0.9,0.99,1700],["ROUND","I","I3",0.9,0.99,1100],["ROUND","J","IF",0.9,0.99,3700],["ROUND","J","VVS1",0.9,0.99,3400],["ROUND","J","VVS2",0.9,0.99,3100],["ROUND","J","VS1",0.9,0.99,2800],["ROUND","J","VS2",0.9,0.99,2600],["ROUND","J","SI1",0.9,0.99,2300],["ROUND","J","SI2",0.9,0.99,2100],["ROUND","J","SI3",0.9,0.99,2000],["ROUND","J","I1",0.9,0.99,1900],["ROUND","J","I2",0.9,0.99,1600],["ROUND","J","I3",0.9,0.99,1000],["ROUND","K","IF",0.9,0.99,3200],["ROUND","K","VVS1",0.9,0.99,3000],["ROUND","K","VVS2",0.9,0.99,2800],["ROUND","K","VS1",0.9,0.99,2500],["ROUND","K","VS2",0.9,0.99,2300],["ROUND","K","SI1",0.9,0.99,2100],["ROUND","K","SI2",0.9,0.99,1900],["ROUND","K","SI3",0.9,0.99,1800],["ROUND","K","I1",0.9,0.99,1700],["ROUND","K","I2",0.9,0.99,1500],["ROUND","K","I3",0.9,0.99,900],["ROUND","L","IF",0.9,0.99,2700],["ROUND","L","VVS1",0.9,0.99,2500],["ROUND","L","VVS2",0.9,0.99,2300],["ROUND","L","VS1",0.9,0.99,2100],["ROUND","L","VS2",0.9,0.99,1900],["ROUND","L","SI1",0.9,0.99,1800],["ROUND","L","SI2",0.9,0.99,1700],["ROUND","L","SI3",0.9,0.99,1700],["ROUND","L","I1",0.9,0.99,1600],["ROUND","L","I2",0.9,0.99,1300],["ROUND","L","I3",0.9,0.99,800],["ROUND","M","IF",0.9,0.99,2400],["ROUND","M","VVS1",0.9,0.99,2200],["ROUND","M","VVS2",0.9,0.99,2000],["ROUND","M","VS1",0.9,0.99,1900],["ROUND","M","VS2",0.9,0.99,1700],["ROUND","M","SI1",0.9,0.99,1600],["ROUND","M","SI2",0.9,0.99,1500],["ROUND","M","SI3",0.9,0.99,1500],["ROUND","M","I1",0.9,0.99,1400],["ROUND","M","I2",0.9,0.99,1100],["ROUND","M","I3",0.9,0.99,700],["ROUND","D","IF",1.0,1.49,16000],["ROUND","D","VVS1",1.0,1.49,12800],["ROUND","D","VVS2",1.0,1.49,9700],["ROUND","D","VS1",1.0,1.49,8300],["ROUND","D","VS2",1.0,1.49,6900],["ROUND","D","SI1",1.0,1.49,5200],["ROUND","D","SI2",1.0,1.49,4100],["ROUND","D","SI3",1.0,1.49,3600],["ROUND","D","I1",1.0,1.49,3300],["ROUND","D","I2",1.0,1.49,2500],["ROUND","D","I3",1.0,1.49,1600],["ROUND","E","IF",1.0,1.49,12500],["ROUND","E","VVS1",1.0,1.49,11100],["ROUND","E","VVS2",1.0,1.49,8800],["ROUND","E","VS1",1.0,1.49,7500],["ROUND","E","VS2",1.0,1.49,6200],["ROUND","E","SI1",1.0,1.49,4800],["ROUND","E","SI2",1.0,1.49,3800],["ROUND","E","SI3",1.0,1.49,3300],["ROUND","E","I1",1.0,1.49,3100],["ROUND","E","I2",1.0,1.49,2400],["ROUND","E","I3",1.0,1.49,1500],["ROUND","F","IF",1.0,1.49,10700],["ROUND","F","VVS1",1.0,1.49,9700],["ROUND","F","VVS2",1.0,1.49,8000],["ROUND","F","VS1",1.0,1.49,6800],["ROUND","F","VS2",1.0,1.49,5600],["ROUND","F","SI1",1.0,1.49,4500],["ROUND","F","SI2",1.0,1.49,3500],["ROUND","F","SI3",1.0,1.49,3100],["ROUND","F","I1",1.0,1.49,2900],["ROUND","F","I2",1.0,1.49,2300],["ROUND","F","I3",1.0,1.49,1400],["ROUND","G","IF",1.0,1.49,8200],["ROUND","G","VVS1",1.0,1.49,7400],["ROUND","G","VVS2",1.0,1.49,6700],["ROUND","G","VS1",1.0,1.49,5900],["ROUND","G","VS2",1.0,1.49,5100],["ROUND","G","SI1",1.0,1.49,4100],["ROUND","G","SI2",1.0,1.49,3300],["ROUND","G","SI3",1.0,1.49,2900],["ROUND","G","I1",1.0,1.49,2700],["ROUND","G","I2",1.0,1.49,2200],["ROUND","G","I3",1.0,1.49,1300],["ROUND","H","IF",1.0,1.49,6100],["ROUND","H","VVS1",1.0,1.49,5600],["ROUND","H","VVS2",1.0,1.49,5200],["ROUND","H","VS1",1.0,1.49,4900],["ROUND","H","VS2",1.0,1.49,4600],["ROUND","H","SI1",1.0,1.49,3800],["ROUND","H","SI2",1.0,1.49,3100],["ROUND","H","SI3",1.0,1.49,2800],["ROUND","H","I1",1.0,1.49,2600],["ROUND","H","I2",1.0,1.49,2100],["ROUND","H","I3",1.0,1.49,1300],["ROUND","I","IF",1.0,1.49,5200],["ROUND","I","VVS1",1.0,1.49,4700],["ROUND","I","VVS2",1.0,1.49,4400],["ROUND","I","VS1",1.0,1.49,4100],["ROUND","I","VS2",1.0,1.49,3800],["ROUND","I","SI1",1.0,1.49,3400],["ROUND","I","SI2",1.0,1.49,2900],["ROUND","I","SI3",1.0,1.49,2600],["ROUND","I","I1",1.0,1.49,2400],["ROUND","I","I2",1.0,1.49,2000],["ROUND","I","I3",1.0,1.49,1200],["ROUND","J","IF",1.0,1.49,4300],["ROUND","J","VVS1",1.0,1.49,3900],["ROUND","J","VVS2",1.0,1.49,3600],["ROUND","J","VS1",1.0,1.49,3300],["ROUND","J","VS2",1.0,1.49,3100],["ROUND","J","SI1",1.0,1.49,2800],["ROUND","J","SI2",1.0,1.49,2500],["ROUND","J","SI3",1.0,1.49,2300],["ROUND","J","I1",1.0,1.49,2200],["ROUND","J","I2",1.0,1.49,1900],["ROUND","J","I3",1.0,1.49,1200],["ROUND","K","IF",1.0,1.49,3600],["ROUND","K","VVS1",1.0,1.49,3300],["ROUND","K","VVS2",1.0,1.49,3100],["ROUND","K","VS1",1.0,1.49,2900],["ROUND","K","VS2",1.0,1.49,2700],["ROUND","K","SI1",1.0,1.49,2500],["ROUND","K","SI2",1.0,1.49,2300],["ROUND","K","SI3",1.0,1.49,2200],["ROUND","K","I1",1.0,1.49,2100],["ROUND","K","I2",1.0,1.49,1800],["ROUND","K","I3",1.0,1.49,1100],["ROUND","L","IF",1.0,1.49,3100],["ROUND","L","VVS1",1.0,1.49,2800],["ROUND","L","VVS2",1.0,1.49,2600],["ROUND","L","VS1",1.0,1.49,2500],["ROUND","L","VS2",1.0,1.49,2300],["ROUND","L","SI1",1.0,1.49,2100],["ROUND","L","SI2",1.0,1.49,2000],["ROUND","L","SI3",1.0,1.49,1900],["ROUND","L","I1",1.0,1.49,1800],["ROUND","L","I2",1.0,1.49,1700],["ROUND","L","I3",1.0,1.49,1000],["ROUND","M","IF",1.0,1.49,2700],["ROUND","M","VVS1",1.0,1.49,2500],["ROUND","M","VVS2",1.0,1.49,2400],["ROUND","M","VS1",1.0,1.49,2300],["ROUND","M","VS2",1.0,1.49,2100],["ROUND","M","SI1",1.0,1.49,1900],["ROUND","M","SI2",1.0,1.49,1800],["ROUND","M","SI3",1.0,1.49,1700],["ROUND","M","I1",1.0,1.49,1600],["ROUND","M","I2",1.0,1.49,1600],["ROUND","M","I3",1.0,1.49,1000],["ROUND","D","IF",1.5,1.99,21000],["ROUND","D","VVS1",1.5,1.99,18700],["ROUND","D","VVS2",1.5,1.99,15400],["ROUND","D","VS1",1.5,1.99,13400],["ROUND","D","VS2",1.5,1.99,12000],["ROUND","D","SI1",1.5,1.99,9300],["ROUND","D","SI2",1.5,1.99,7500],["ROUND","D","SI3",1.5,1.99,6600],["ROUND","D","I1",1.5,1.99,5500],["ROUND","D","I2",1.5,1.99,3500],["ROUND","D","I3",1.5,1.99,1800],["ROUND","E","IF",1.5,1.99,18800],["ROUND","E","VVS1",1.5,1.99,17300],["ROUND","E","VVS2",1.5,1.99,14300],["ROUND","E","VS1",1.5,1.99,12200],["ROUND","E","VS2",1.5,1.99,11000],["ROUND","E","SI1",1.5,1.99,8600],["ROUND","E","SI2",1.5,1.99,6800],["ROUND","E","SI3",1.5,1.99,6000],["ROUND","E","I1",1.5,1.99,5200],["ROUND","E","I2",1.5,1.99,3300],["ROUND","E","I3",1.5,1.99,1700],["ROUND","F","IF",1.5,1.99,16400],["ROUND","F","VVS1",1.5,1.99,15300],["ROUND","F","VVS2",1.5,1.99,13200],["ROUND","F","VS1",1.5,1.99,11400],["ROUND","F","VS2",1.5,1.99,10300],["ROUND","F","SI1",1.5,1.99,8100],["ROUND","F","SI2",1.5,1.99,6400],["ROUND","F","SI3",1.5,1.99,5700],["ROUND","F","I1",1.5,1.99,4900],["ROUND","F","I2",1.5,1.99,3200],["ROUND","F","I3",1.5,1.99,1600],["ROUND","G","IF",1.5,1.99,13600],["ROUND","G","VVS1",1.5,1.99,12600],["ROUND","G","VVS2",1.5,1.99,11400],["ROUND","G","VS1",1.5,1.99,9900],["ROUND","G","VS2",1.5,1.99,8900],["ROUND","G","SI1",1.5,1.99,7500],["ROUND","G","SI2",1.5,1.99,6000],["ROUND","G","SI3",1.5,1.99,5400],["ROUND","G","I1",1.5,1.99,4600],["ROUND","G","I2",1.5,1.99,3000],["ROUND","G","I3",1.5,1.99,1500],["ROUND","H","IF",1.5,1.99,10800],["ROUND","H","VVS1",1.5,1.99,10000],["ROUND","H","VVS2",1.5,1.99,9100],["ROUND","H","VS1",1.5,1.99,8100],["ROUND","H","VS2",1.5,1.99,7400],["ROUND","H","SI1",1.5,1.99,6600],["ROUND","H","SI2",1.5,1.99,5500],["ROUND","H","SI3",1.5,1.99,5000],["ROUND","H","I1",1.5,1.99,4200],["ROUND","H","I2",1.5,1.99,2900],["ROUND","H","I3",1.5,1.99,1500],["ROUND","I","IF",1.5,1.99,8700],["ROUND","I","VVS1",1.5,1.99,8100],["ROUND","I","VVS2",1.5,1.99,7300],["ROUND","I","VS1",1.5,1.99,6800],["ROUND","I","VS2",1.5,1.99,6300],["ROUND","I","SI1",1.5,1.99,5600],["ROUND","I","SI2",1.5,1.99,5100],["ROUND","I","SI3",1.5,1.99,4600],["ROUND","I","I1",1.5,1.99,3900],["ROUND","I","I2",1.5,1.99,2700],["ROUND","I","I3",1.5,1.99,1400],["ROUND","J","IF",1.5,1.99,7400],["ROUND","J","VVS1",1.5,1.99,6700],["ROUND","J","VVS2",1.5,1.99,6100],["ROUND","J","VS1",1.5,1.99,5700],["ROUND","J","VS2",1.5,1.99,5300],["ROUND","J","SI1",1.5,1.99,4800],["ROUND","J","SI2",1.5,1.99,4300],["ROUND","J","SI3",1.5,1.99,3900],["ROUND","J","I1",1.5,1.99,3500],["ROUND","J","I2",1.5,1.99,2600],["ROUND","J","I3",1.5,1.99,1400],["ROUND","K","IF",1.5,1.99,6300],["ROUND","K","VVS1",1.5,1.99,5600],["ROUND","K","VVS2",1.5,1.99,5100],["ROUND","K","VS1",1.5,1.99,4700],["ROUND","K","VS2",1.5,1.99,4400],["ROUND","K","SI1",1.5,1.99,4000],["ROUND","K","SI2",1.5,1.99,3700],["ROUND","K","SI3",1.5,1.99,3400],["ROUND","K","I1",1.5,1.99,3100],["ROUND","K","I2",1.5,1.99,2400],["ROUND","K","I3",1.5,1.99,1300],["ROUND","L","IF",1.5,1.99,5300],["ROUND","L","VVS1",1.5,1.99,4700],["ROUND","L","VVS2",1.5,1.99,4300],["ROUND","L","VS1",1.5,1.99,4000],["ROUND","L","VS2",1.5,1.99,3800],["ROUND","L","SI1",1.5,1.99,3500],["ROUND","L","SI2",1.5,1.99,3300],["ROUND","L","SI3",1.5,1.99,3100],["ROUND","L","I1",1.5,1.99,2900],["ROUND","L","I2",1.5,1.99,2300],["ROUND","L","I3",1.5,1.99,1200],["ROUND","M","IF",1.5,1.99,4600],["ROUND","M","VVS1",1.5,1.99,4100],["ROUND","M","VVS2",1.5,1.99,3900],["ROUND","M","VS1",1.5,1.99,3600],["ROUND","M","VS2",1.5,1.99,3400],["ROUND","M","SI1",1.5,1.99,3200],["ROUND","M","SI2",1.5,1.99,3000],["ROUND","M","SI3",1.5,1.99,2800],["ROUND","M","I1",1.5,1.99,2700],["ROUND","M","I2",1.5,1.99,2200],["ROUND","M","I3",1.5,1.99,1200],["ROUND","D","IF",2.0,2.99,33000],["ROUND","D","VVS1",2.0,2.99,27500],["ROUND","D","VVS2",2.0,2.99,23500],["ROUND","D","VS1",2.0,2.99,20500],["ROUND","D","VS2",2.0,2.99,17500],["ROUND","D","SI1",2.0,2.99,14100],["ROUND","D","SI2",2.0,2.99,11300],["ROUND","D","SI3",2.0,2.99,9500],["ROUND","D","I1",2.0,2.99,8000],["ROUND","D","I2",2.0,2.99,4100],["ROUND","D","I3",2.0,2.99,1900],["ROUND","E","IF",2.0,2.99,27000],["ROUND","E","VVS1",2.0,2.99,24500],["ROUND","E","VVS2",2.0,2.99,21000],["ROUND","E","VS1",2.0,2.99,19000],["ROUND","E","VS2",2.0,2.99,16000],["ROUND","E","SI1",2.0,2.99,13200],["ROUND","E","SI2",2.0,2.99,10500],["ROUND","E","SI3",2.0,2.99,8800],["ROUND","E","I1",2.0,2.99,7600],["ROUND","E","I2",2.0,2.99,3900],["ROUND","E","I3",2.0,2.99,1800],["ROUND","F","IF",2.0,2.99,24500],["ROUND","F","VVS1",2.0,2.99,22000],["ROUND","F","VVS2",2.0,2.99,19500],["ROUND","F","VS1",2.0,2.99,17500],["ROUND","F","VS2",2.0,2.99,15000],["ROUND","F","SI1",2.0,2.99,12300],["ROUND","F","SI2",2.0,2.99,9800],["ROUND","F","SI3",2.0,2.99,8300],["ROUND","F","I1",2.0,2.99,7200],["ROUND","F","I2",2.0,2.99,3700],["ROUND","F","I3",2.0,2.99,1700],["ROUND","G","IF",2.0,2.99,20500],["ROUND","G","VVS1",2.0,2.99,18500],["ROUND","G","VVS2",2.0,2.99,16500],["ROUND","G","VS1",2.0,2.99,15000],["ROUND","G","VS2",2.0,2.99,13500],["ROUND","G","SI1",2.0,2.99,11200],["ROUND","G","SI2",2.0,2.99,9200],["ROUND","G","SI3",2.0,2.99,7700],["ROUND","G","I1",2.0,2.99,6800],["ROUND","G","I2",2.0,2.99,3500],["ROUND","G","I3",2.0,2.99,1600],["ROUND","H","IF",2.0,2.99,16500],["ROUND","H","VVS1",2.0,2.99,15000],["ROUND","H","VVS2",2.0,2.99,13500],["ROUND","H","VS1",2.0,2.99,12500],["ROUND","H","VS2",2.0,2.99,11500],["ROUND","H","SI1",2.0,2.99,10400],["ROUND","H","SI2",2.0,2.99,8600],["ROUND","H","SI3",2.0,2.99,7100],["ROUND","H","I1",2.0,2.99,6500],["ROUND","H","I2",2.0,2.99,3300],["ROUND","H","I3",2.0,2.99,1500],["ROUND","I","IF",2.0,2.99,13500],["ROUND","I","VVS1",2.0,2.99,12000],["ROUND","I","VVS2",2.0,2.99,11000],["ROUND","I","VS1",2.0,2.99,10000],["ROUND","I","VS2",2.0,2.99,9300],["ROUND","I","SI1",2.0,2.99,8600],["ROUND","I","SI2",2.0,2.99,7800],["ROUND","I","SI3",2.0,2.99,6600],["ROUND","I","I1",2.0,2.99,6100],["ROUND","I","I2",2.0,2.99,3100],["ROUND","I","I3",2.0,2.99,1500],["ROUND","J","IF",2.0,2.99,10900],["ROUND","J","VVS1",2.0,2.99,9900],["ROUND","J","VVS2",2.0,2.99,9100],["ROUND","J","VS1",2.0,2.99,8400],["ROUND","J","VS2",2.0,2.99,7600],["ROUND","J","SI1",2.0,2.99,6900],["ROUND","J","SI2",2.0,2.99,6300],["ROUND","J","SI3",2.0,2.99,5700],["ROUND","J","I1",2.0,2.99,5400],["ROUND","J","I2",2.0,2.99,2900],["ROUND","J","I3",2.0,2.99,1400],["ROUND","K","IF",2.0,2.99,9100],["ROUND","K","VVS1",2.0,2.99,8300],["ROUND","K","VVS2",2.0,2.99,7600],["ROUND","K","VS1",2.0,2.99,7000],["ROUND","K","VS2",2.0,2.99,6300],["ROUND","K","SI1",2.0,2.99,5700],["ROUND","K","SI2",2.0,2.99,5300],["ROUND","K","SI3",2.0,2.99,5000],["ROUND","K","I1",2.0,2.99,4700],["ROUND","K","I2",2.0,2.99,2800],["ROUND","K","I3",2.0,2.99,1400],["ROUND","L","IF",2.0,2.99,7800],["ROUND","L","VVS1",2.0,2.99,7100],["ROUND","L","VVS2",2.0,2.99,6600],["ROUND","L","VS1",2.0,2.99,6100],["ROUND","L","VS2",2.0,2.99,5400],["ROUND","L","SI1",2.0,2.99,5000],["ROUND","L","SI2",2.0,2.99,4600],["ROUND","L","SI3",2.0,2.99,4300],["ROUND","L","I1",2.0,2.99,4000],["ROUND","L","I2",2.0,2.99,2700],["ROUND","L","I3",2.0,2.99,1300],["ROUND","M","IF",2.0,2.99,6800],["ROUND","M","VVS1",2.0,2.99,6300],["ROUND","M","VVS2",2.0,2.99,5700],["ROUND","M","VS1",2.0,2.99,5400],["ROUND","M","VS2",2.0,2.99,4800],["ROUND","M","SI1",2.0,2.99,4500],["ROUND","M","SI2",2.0,2.99,4200],["ROUND","M","SI3",2.0,2.99,4000],["ROUND","M","I1",2.0,2.99,3800],["ROUND","M","I2",2.0,2.99,2600],["ROUND","M","I3",2.0,2.99,1300],["ROUND","D","IF",3.0,3.99,55000],["ROUND","D","VVS1",3.0,3.99,46000],["ROUND","D","VVS2",3.0,3.99,41000],["ROUND","D","VS1",3.0,3.99,35000],["ROUND","D","VS2",3.0,3.99,29500],["ROUND","D","SI1",3.0,3.99,23500],["ROUND","D","SI2",3.0,3.99,20000],["ROUND","D","SI3",3.0,3.99,13900],["ROUND","D","I1",3.0,3.99,10300],["ROUND","D","I2",3.0,3.99,4900],["ROUND","D","I3",3.0,3.99,2100],["ROUND","E","IF",3.0,3.99,45000],["ROUND","E","VVS1",3.0,3.99,42000],["ROUND","E","VVS2",3.0,3.99,37000],["ROUND","E","VS1",3.0,3.99,32000],["ROUND","E","VS2",3.0,3.99,26500],["ROUND","E","SI1",3.0,3.99,21000],["ROUND","E","SI2",3.0,3.99,18500],["ROUND","E","SI3",3.0,3.99,13100],["ROUND","E","I1",3.0,3.99,9800],["ROUND","E","I2",3.0,3.99,4700],["ROUND","E","I3",3.0,3.99,2000],["ROUND","F","IF",3.0,3.99,40500],["ROUND","F","VVS1",3.0,3.99,37500],["ROUND","F","VVS2",3.0,3.99,33500],["ROUND","F","VS1",3.0,3.99,29500],["ROUND","F","VS2",3.0,3.99,24500],["ROUND","F","SI1",3.0,3.99,19500],["ROUND","F","SI2",3.0,3.99,17000],["ROUND","F","SI3",3.0,3.99,12400],["ROUND","F","I1",3.0,3.99,9300],["ROUND","F","I2",3.0,3.99,4500],["ROUND","F","I3",3.0,3.99,1900],["ROUND","G","IF",3.0,3.99,33500],["ROUND","G","VVS1",3.0,3.99,31500],["ROUND","G","VVS2",3.0,3.99,28000],["ROUND","G","VS1",3.0,3.99,24500],["ROUND","G","VS2",3.0,3.99,21000],["ROUND","G","SI1",3.0,3.99,18000],["ROUND","G","SI2",3.0,3.99,15500],["ROUND","G","SI3",3.0,3.99,11200],["ROUND","G","I1",3.0,3.99,8700],["ROUND","G","I2",3.0,3.99,4300],["ROUND","G","I3",3.0,3.99,1800],["ROUND","H","IF",3.0,3.99,27000],["ROUND","H","VVS1",3.0,3.99,25000],["ROUND","H","VVS2",3.0,3.99,22500],["ROUND","H","VS1",3.0,3.99,20500],["ROUND","H","VS2",3.0,3.99,18500],["ROUND","H","SI1",3.0,3.99,16000],["ROUND","H","SI2",3.0,3.99,13500],["ROUND","H","SI3",3.0,3.99,10100],["ROUND","H","I1",3.0,3.99,8200],["ROUND","H","I2",3.0,3.99,4100],["ROUND","H","I3",3.0,3.99,1700],["ROUND","I","IF",3.0,3.99,22000],["ROUND","I","VVS1",3.0,3.99,20500],["ROUND","I","VVS2",3.0,3.99,19000],["ROUND","I","VS1",3.0,3.99,17500],["ROUND","I","VS2",3.0,3.99,16000],["ROUND","I","SI1",3.0,3.99,14000],["ROUND","I","SI2",3.0,3.99,12000],["ROUND","I","SI3",3.0,3.99,9200],["ROUND","I","I1",3.0,3.99,7700],["ROUND","I","I2",3.0,3.99,3800],["ROUND","I","I3",3.0,3.99,1600],["ROUND","J","IF",3.0,3.99,17500],["ROUND","J","VVS1",3.0,3.99,16500],["ROUND","J","VVS2",3.0,3.99,15000],["ROUND","J","VS1",3.0,3.99,14000],["ROUND","J","VS2",3.0,3.99,13000],["ROUND","J","SI1",3.0,3.99,12000],["ROUND","J","SI2",3.0,3.99,11000],["ROUND","J","SI3",3.0,3.99,8400],["ROUND","J","I1",3.0,3.99,7100],["ROUND","J","I2",3.0,3.99,3500],["ROUND","J","I3",3.0,3.99,1500],["ROUND","K","IF",3.0,3.99,14500],["ROUND","K","VVS1",3.0,3.99,13500],["ROUND","K","VVS2",3.0,3.99,12500],["ROUND","K","VS1",3.0,3.99,12000],["ROUND","K","VS2",3.0,3.99,11000],["ROUND","K","SI1",3.0,3.99,10300],["ROUND","K","SI2",3.0,3.99,9700],["ROUND","K","SI3",3.0,3.99,7600],["ROUND","K","I1",3.0,3.99,6200],["ROUND","K","I2",3.0,3.99,3300],["ROUND","K","I3",3.0,3.99,1500],["ROUND","L","IF",3.0,3.99,11700],["ROUND","L","VVS1",3.0,3.99,11100],["ROUND","L","VVS2",3.0,3.99,10700],["ROUND","L","VS1",3.0,3.99,10300],["ROUND","L","VS2",3.0,3.99,9500],["ROUND","L","SI1",3.0,3.99,9000],["ROUND","L","SI2",3.0,3.99,8200],["ROUND","L","SI3",3.0,3.99,6500],["ROUND","L","I1",3.0,3.99,5500],["ROUND","L","I2",3.0,3.99,3100],["ROUND","L","I3",3.0,3.99,1400],["ROUND","M","IF",3.0,3.99,9500],["ROUND","M","VVS1",3.0,3.99,9100],["ROUND","M","VVS2",3.0,3.99,8700],["ROUND","M","VS1",3.0,3.99,8300],["ROUND","M","VS2",3.0,3.99,7900],["ROUND","M","SI1",3.0,3.99,7500],["ROUND","M","SI2",3.0,3.99,6700],["ROUND","M","SI3",3.0,3.99,5800],["ROUND","M","I1",3.0,3.99,4700],["ROUND","M","I2",3.0,3.99,3000],["ROUND","M","I3",3.0,3.99,1400],["ROUND","D","IF",4.0,4.99,74500],["ROUND","D","VVS1",4.0,4.99,64500],["ROUND","D","VVS2",4.0,4.99,58500],["ROUND","D","VS1",4.0,4.99,49500],["ROUND","D","VS2",4.0,4.99,41500],["ROUND","D","SI1",4.0,4.99,31500],["ROUND","D","SI2",4.0,4.99,25500],["ROUND","D","SI3",4.0,4.99,15500],["ROUND","D","I1",4.0,4.99,11100],["ROUND","D","I2",4.0,4.99,5400],["ROUND","D","I3",4.0,4.99,2300],["ROUND","E","IF",4.0,4.99,62500],["ROUND","E","VVS1",4.0,4.99,58500],["ROUND","E","VVS2",4.0,4.99,52500],["ROUND","E","VS1",4.0,4.99,45000],["ROUND","E","VS2",4.0,4.99,39000],["ROUND","E","SI1",4.0,4.99,29500],["ROUND","E","SI2",4.0,4.99,24000],["ROUND","E","SI3",4.0,4.99,14500],["ROUND","E","I1",4.0,4.99,10600],["ROUND","E","I2",4.0,4.99,5200],["ROUND","E","I3",4.0,4.99,2200],["ROUND","F","IF",4.0,4.99,56500],["ROUND","F","VVS1",4.0,4.99,52000],["ROUND","F","VVS2",4.0,4.99,47500],["ROUND","F","VS1",4.0,4.99,41000],["ROUND","F","VS2",4.0,4.99,35500],["ROUND","F","SI1",4.0,4.99,27500],["ROUND","F","SI2",4.0,4.99,22500],["ROUND","F","SI3",4.0,4.99,13800],["ROUND","F","I1",4.0,4.99,10100],["ROUND","F","I2",4.0,4.99,5000],["ROUND","F","I3",4.0,4.99,2100],["ROUND","G","IF",4.0,4.99,46500],["ROUND","G","VVS1",4.0,4.99,43000],["ROUND","G","VVS2",4.0,4.99,39500],["ROUND","G","VS1",4.0,4.99,36000],["ROUND","G","VS2",4.0,4.99,31500],["ROUND","G","SI1",4.0,4.99,24500],["ROUND","G","SI2",4.0,4.99,20000],["ROUND","G","SI3",4.0,4.99,12700],["ROUND","G","I1",4.0,4.99,9500],["ROUND","G","I2",4.0,4.99,4700],["ROUND","G","I3",4.0,4.99,2000],["ROUND","H","IF",4.0,4.99,36000],["ROUND","H","VVS1",4.0,4.99,33500],["ROUND","H","VVS2",4.0,4.99,31500],["ROUND","H","VS1",4.0,4.99,29500],["ROUND","H","VS2",4.0,4.99,26000],["ROUND","H","SI1",4.0,4.99,21500],["ROUND","H","SI2",4.0,4.99,18000],["ROUND","H","SI3",4.0,4.99,11400],["ROUND","H","I1",4.0,4.99,9000],["ROUND","H","I2",4.0,4.99,4400],["ROUND","H","I3",4.0,4.99,1900],["ROUND","I","IF",4.0,4.99,28000],["ROUND","I","VVS1",4.0,4.99,26000],["ROUND","I","VVS2",4.0,4.99,24500],["ROUND","I","VS1",4.0,4.99,23000],["ROUND","I","VS2",4.0,4.99,21000],["ROUND","I","SI1",4.0,4.99,19000],["ROUND","I","SI2",4.0,4.99,16000],["ROUND","I","SI3",4.0,4.99,10500],["ROUND","I","I1",4.0,4.99,8600],["ROUND","I","I2",4.0,4.99,4100],["ROUND","I","I3",4.0,4.99,1800],["ROUND","J","IF",4.0,4.99,22500],["ROUND","J","VVS1",4.0,4.99,21000],["ROUND","J","VVS2",4.0,4.99,19500],["ROUND","J","VS1",4.0,4.99,18500],["ROUND","J","VS2",4.0,4.99,17000],["ROUND","J","SI1",4.0,4.99,15500],["ROUND","J","SI2",4.0,4.99,14000],["ROUND","J","SI3",4.0,4.99,9500],["ROUND","J","I1",4.0,4.99,7500],["ROUND","J","I2",4.0,4.99,3900],["ROUND","J","I3",4.0,4.99,1700],["ROUND","K","IF",4.0,4.99,18500],["ROUND","K","VVS1",4.0,4.99,17500],["ROUND","K","VVS2",4.0,4.99,16000],["ROUND","K","VS1",4.0,4.99,15000],["ROUND","K","VS2",4.0,4.99,14000],["ROUND","K","SI1",4.0,4.99,13000],["ROUND","K","SI2",4.0,4.99,12000],["ROUND","K","SI3",4.0,4.99,8300],["ROUND","K","I1",4.0,4.99,6600],["ROUND","K","I2",4.0,4.99,3600],["ROUND","K","I3",4.0,4.99,1700],["ROUND","L","IF",4.0,4.99,15000],["ROUND","L","VVS1",4.0,4.99,14000],["ROUND","L","VVS2",4.0,4.99,13000],["ROUND","L","VS1",4.0,4.99,12000],["ROUND","L","VS2",4.0,4.99,11500],["ROUND","L","SI1",4.0,4.99,10500],["ROUND","L","SI2",4.0,4.99,10000],["ROUND","L","SI3",4.0,4.99,7300],["ROUND","L","I1",4.0,4.99,5900],["ROUND","L","I2",4.0,4.99,3400],["ROUND","L","I3",4.0,4.99,1600],["ROUND","M","IF",4.0,4.99,12500],["ROUND","M","VVS1",4.0,4.99,11500],["ROUND","M","VVS2",4.0,4.99,10500],["ROUND","M","VS1",4.0,4.99,10000],["ROUND","M","VS2",4.0,4.99,9500],["ROUND","M","SI1",4.0,4.99,9000],["ROUND","M","SI2",4.0,4.99,8000],["ROUND","M","SI3",4.0,4.99,6500],["ROUND","M","I1",4.0,4.99,5000],["ROUND","M","I2",4.0,4.99,3200],["ROUND","M","I3",4.0,4.99,1600],["ROUND","D","IF",5.0,5.99,100000],["ROUND","D","VVS1",5.0,5.99,85500],["ROUND","D","VVS2",5.0,5.99,77000],["ROUND","D","VS1",5.0,5.99,69000],["ROUND","D","VS2",5.0,5.99,58000],["ROUND","D","SI1",5.0,5.99,43000],["ROUND","D","SI2",5.0,5.99,31500],["ROUND","D","SI3",5.0,5.99,17500],["ROUND","D","I1",5.0,5.99,12500],["ROUND","D","I2",5.0,5.99,6000],["ROUND","D","I3",5.0,5.99,2500],["ROUND","E","IF",5.0,5.99,83500],["ROUND","E","VVS1",5.0,5.99,75000],["ROUND","E","VVS2",5.0,5.99,67000],["ROUND","E","VS1",5.0,5.99,59500],["ROUND","E","VS2",5.0,5.99,52000],["ROUND","E","SI1",5.0,5.99,39500],["ROUND","E","SI2",5.0,5.99,29500],["ROUND","E","SI3",5.0,5.99,17000],["ROUND","E","I1",5.0,5.99,12000],["ROUND","E","I2",5.0,5.99,5700],["ROUND","E","I3",5.0,5.99,2300],["ROUND","F","IF",5.0,5.99,73000],["ROUND","F","VVS1",5.0,5.99,67000],["ROUND","F","VVS2",5.0,5.99,59500],["ROUND","F","VS1",5.0,5.99,54000],["ROUND","F","VS2",5.0,5.99,46500],["ROUND","F","SI1",5.0,5.99,36000],["ROUND","F","SI2",5.0,5.99,28000],["ROUND","F","SI3",5.0,5.99,16000],["ROUND","F","I1",5.0,5.99,11500],["ROUND","F","I2",5.0,5.99,5400],["ROUND","F","I3",5.0,5.99,2200],["ROUND","G","IF",5.0,5.99,60500],["ROUND","G","VVS1",5.0,5.99,55500],["ROUND","G","VVS2",5.0,5.99,50500],["ROUND","G","VS1",5.0,5.99,46000],["ROUND","G","VS2",5.0,5.99,39500],["ROUND","G","SI1",5.0,5.99,32000],["ROUND","G","SI2",5.0,5.99,26000],["ROUND","G","SI3",5.0,5.99,15000],["ROUND","G","I1",5.0,5.99,11000],["ROUND","G","I2",5.0,5.99,5100],["ROUND","G","I3",5.0,5.99,2100],["ROUND","H","IF",5.0,5.99,48000],["ROUND","H","VVS1",5.0,5.99,44500],["ROUND","H","VVS2",5.0,5.99,40000],["ROUND","H","VS1",5.0,5.99,36000],["ROUND","H","VS2",5.0,5.99,32500],["ROUND","H","SI1",5.0,5.99,26500],["ROUND","H","SI2",5.0,5.99,22500],["ROUND","H","SI3",5.0,5.99,14000],["ROUND","H","I1",5.0,5.99,10000],["ROUND","H","I2",5.0,5.99,4800],["ROUND","H","I3",5.0,5.99,2100],["ROUND","I","IF",5.0,5.99,36500],["ROUND","I","VVS1",5.0,5.99,34500],["ROUND","I","VVS2",5.0,5.99,31500],["ROUND","I","VS1",5.0,5.99,29000],["ROUND","I","VS2",5.0,5.99,25500],["ROUND","I","SI1",5.0,5.99,22500],["ROUND","I","SI2",5.0,5.99,19500],["ROUND","I","SI3",5.0,5.99,13000],["ROUND","I","I1",5.0,5.99,9500],["ROUND","I","I2",5.0,5.99,4600],["ROUND","I","I3",5.0,5.99,2000],["ROUND","J","IF",5.0,5.99,28000],["ROUND","J","VVS1",5.0,5.99,26000],["ROUND","J","VVS2",5.0,5.99,24000],["ROUND","J","VS1",5.0,5.99,22000],["ROUND","J","VS2",5.0,5.99,20500],["ROUND","J","SI1",5.0,5.99,19500],["ROUND","J","SI2",5.0,5.99,17000],["ROUND","J","SI3",5.0,5.99,12000],["ROUND","J","I1",5.0,5.99,8800],["ROUND","J","I2",5.0,5.99,4300],["ROUND","J","I3",5.0,5.99,1900],["ROUND","K","IF",5.0,5.99,22000],["ROUND","K","VVS1",5.0,5.99,21000],["ROUND","K","VVS2",5.0,5.99,19500],["ROUND","K","VS1",5.0,5.99,18000],["ROUND","K","VS2",5.0,5.99,17000],["ROUND","K","SI1",5.0,5.99,16500],["ROUND","K","SI2",5.0,5.99,15000],["ROUND","K","SI3",5.0,5.99,11000],["ROUND","K","I1",5.0,5.99,8100],["ROUND","K","I2",5.0,5.99,4100],["ROUND","K","I3",5.0,5.99,1800],["ROUND","L","IF",5.0,5.99,18000],["ROUND","L","VVS1",5.0,5.99,16500],["ROUND","L","VVS2",5.0,5.99,15500],["ROUND","L","VS1",5.0,5.99,15000],["ROUND","L","VS2",5.0,5.99,14000],["ROUND","L","SI1",5.0,5.99,13500],["ROUND","L","SI2",5.0,5.99,12500],["ROUND","L","SI3",5.0,5.99,10000],["ROUND","L","I1",5.0,5.99,6900],["ROUND","L","I2",5.0,5.99,3700],["ROUND","L","I3",5.0,5.99,1700],["ROUND","M","IF",5.0,5.99,15000],["ROUND","M","VVS1",5.0,5.99,14000],["ROUND","M","VVS2",5.0,5.99,13000],["ROUND","M","VS1",5.0,5.99,12500],["ROUND","M","VS2",5.0,5.99,12000],["ROUND","M","SI1",5.0,5.99,11000],["ROUND","M","SI2",5.0,5.99,10000],["ROUND","M","SI3",5.0,5.99,8000],["ROUND","M","I1",5.0,5.99,6000],["ROUND","M","I2",5.0,5.99,3400],["ROUND","M","I3",5.0,5.99,1600],["ROUND","D","IF",10.0,10.99,140000],["ROUND","D","VVS1",10.0,10.99,130000],["ROUND","D","VVS2",10.0,10.99,120000],["ROUND","D","VS1",10.0,10.99,107000],["ROUND","D","VS2",10.0,10.99,90000],["ROUND","D","SI1",10.0,10.99,63500],["ROUND","D","SI2",10.0,10.99,46500],["ROUND","D","SI3",10.0,10.99,25000],["ROUND","D","I1",10.0,10.99,14000],["ROUND","D","I2",10.0,10.99,6600],["ROUND","D","I3",10.0,10.99,2700],["ROUND","E","IF",10.0,10.99,127000],["ROUND","E","VVS1",10.0,10.99,116000],["ROUND","E","VVS2",10.0,10.99,103000],["ROUND","E","VS1",10.0,10.99,93000],["ROUND","E","VS2",10.0,10.99,82000],["ROUND","E","SI1",10.0,10.99,58500],["ROUND","E","SI2",10.0,10.99,43000],["ROUND","E","SI3",10.0,10.99,23500],["ROUND","E","I1",10.0,10.99,13500],["ROUND","E","I2",10.0,10.99,6300],["ROUND","E","I3",10.0,10.99,2600],["ROUND","F","IF",10.0,10.99,111000],["ROUND","F","VVS1",10.0,10.99,104000],["ROUND","F","VVS2",10.0,10.99,93000],["ROUND","F","VS1",10.0,10.99,83500],["ROUND","F","VS2",10.0,10.99,71500],["ROUND","F","SI1",10.0,10.99,53500],["ROUND","F","SI2",10.0,10.99,40000],["ROUND","F","SI3",10.0,10.99,22000],["ROUND","F","I1",10.0,10.99,13000],["ROUND","F","I2",10.0,10.99,6000],["ROUND","F","I3",10.0,10.99,2500],["ROUND","G","IF",10.0,10.99,93000],["ROUND","G","VVS1",10.0,10.99,86500],["ROUND","G","VVS2",10.0,10.99,78500],["ROUND","G","VS1",10.0,10.99,71500],["ROUND","G","VS2",10.0,10.99,61000],["ROUND","G","SI1",10.0,10.99,48500],["ROUND","G","SI2",10.0,10.99,37000],["ROUND","G","SI3",10.0,10.99,20500],["ROUND","G","I1",10.0,10.99,12500],["ROUND","G","I2",10.0,10.99,5700],["ROUND","G","I3",10.0,10.99,2400],["ROUND","H","IF",10.0,10.99,75000],["ROUND","H","VVS1",10.0,10.99,69500],["ROUND","H","VVS2",10.0,10.99,63000],["ROUND","H","VS1",10.0,10.99,56500],["ROUND","H","VS2",10.0,10.99,50000],["ROUND","H","SI1",10.0,10.99,40500],["ROUND","H","SI2",10.0,10.99,32500],["ROUND","H","SI3",10.0,10.99,18500],["ROUND","H","I1",10.0,10.99,12000],["ROUND","H","I2",10.0,10.99,5500],["ROUND","H","I3",10.0,10.99,2300],["ROUND","I","IF",10.0,10.99,57000],["ROUND","I","VVS1",10.0,10.99,53500],["ROUND","I","VVS2",10.0,10.99,49500],["ROUND","I","VS1",10.0,10.99,46000],["ROUND","I","VS2",10.0,10.99,40500],["ROUND","I","SI1",10.0,10.99,34000],["ROUND","I","SI2",10.0,10.99,27500],["ROUND","I","SI3",10.0,10.99,17000],["ROUND","I","I1",10.0,10.99,11500],["ROUND","I","I2",10.0,10.99,5200],["ROUND","I","I3",10.0,10.99,2200],["ROUND","J","IF",10.0,10.99,44000],["ROUND","J","VVS1",10.0,10.99,40500],["ROUND","J","VVS2",10.0,10.99,37500],["ROUND","J","VS1",10.0,10.99,35000],["ROUND","J","VS2",10.0,10.99,32500],["ROUND","J","SI1",10.0,10.99,28500],["ROUND","J","SI2",10.0,10.99,23500],["ROUND","J","SI3",10.0,10.99,15000],["ROUND","J","I1",10.0,10.99,11000],["ROUND","J","I2",10.0,10.99,4900],["ROUND","J","I3",10.0,10.99,2100],["ROUND","K","IF",10.0,10.99,34500],["ROUND","K","VVS1",10.0,10.99,32500],["ROUND","K","VVS2",10.0,10.99,30000],["ROUND","K","VS1",10.0,10.99,27500],["ROUND","K","VS2",10.0,10.99,25500],["ROUND","K","SI1",10.0,10.99,23500],["ROUND","K","SI2",10.0,10.99,20000],["ROUND","K","SI3",10.0,10.99,13500],["ROUND","K","I1",10.0,10.99,10000],["ROUND","K","I2",10.0,10.99,4700],["ROUND","K","I3",10.0,10.99,2000],["ROUND","L","IF",10.0,10.99,27000],["ROUND","L","VVS1",10.0,10.99,25500],["ROUND","L","VVS2",10.0,10.99,24000],["ROUND","L","VS1",10.0,10.99,22500],["ROUND","L","VS2",10.0,10.99,21000],["ROUND","L","SI1",10.0,10.99,19500],["ROUND","L","SI2",10.0,10.99,16500],["ROUND","L","SI3",10.0,10.99,12000],["ROUND","L","I1",10.0,10.99,8500],["ROUND","L","I2",10.0,10.99,4500],["ROUND","L","I3",10.0,10.99,1900],["ROUND","M","IF",10.0,10.99,22500],["ROUND","M","VVS1",10.0,10.99,21000],["ROUND","M","VVS2",10.0,10.99,19500],["ROUND","M","VS1",10.0,10.99,18500],["ROUND","M","VS2",10.0,10.99,17500],["ROUND","M","SI1",10.0,10.99,16500],["ROUND","M","SI2",10.0,10.99,14000],["ROUND","M","SI3",10.0,10.99,10500],["ROUND","M","I1",10.0,10.99,7500],["ROUND","M","I2",10.0,10.99,4300],["ROUND","M","I3",10.0,10.99,1800],["PS","D","IF",0.18,0.22,1370],["PS","D","VVS1",0.18,0.22,1370],["PS","D","VVS2",0.18,0.22,1370],["PS","D","VS1",0.18,0.22,1160],["PS","D","VS2",0.18,0.22,1160],["PS","D","SI1",0.18,0.22,1000],["PS","D","SI2",0.18,0.22,850],["PS","D","SI3",0.18,0.22,710],["PS","D","I1",0.18,0.22,600],["PS","D","I2",0.18,0.22,450],["PS","D","I3",0.18,0.22,360],["PS","E","IF",0.18,0.22,1370],["PS","E","VVS1",0.18,0.22,1370],["PS","E","VVS2",0.18,0.22,1370],["PS","E","VS1",0.18,0.22,1160],["PS","E","VS2",0.18,0.22,1160],["PS","E","SI1",0.18,0.22,1000],["PS","E","SI2",0.18,0.22,850],["PS","E","SI3",0.18,0.22,710],["PS","E","I1",0.18,0.22,600],["PS","E","I2",0.18,0.22,450],["PS","E","I3",0.18,0.22,360],["PS","F","IF",0.18,0.22,1370],["PS","F","VVS1",0.18,0.22,1370],["PS","F","VVS2",0.18,0.22,1370],["PS","F","VS1",0.18,0.22,1160],["PS","F","VS2",0.18,0.22,1160],["PS","F","SI1",0.18,0.22,1000],["PS","F","SI2",0.18,0.22,850],["PS","F","SI3",0.18,0.22,710],["PS","F","I1",0.18,0.22,600],["PS","F","I2",0.18,0.22,450],["PS","F","I3",0.18,0.22,360],["PS","G","IF",0.18,0.22,1210],["PS","G","VVS1",0.18,0.22,1210],["PS","G","VVS2",0.18,0.22,1210],["PS","G","VS1",0.18,0.22,1020],["PS","G","VS2",0.18,0.22,1020],["PS","G","SI1",0.18,0.22,880],["PS","G","SI2",0.18,0.22,750],["PS","G","SI3",0.18,0.22,630],["PS","G","I1",0.18,0.22,520],["PS","G","I2",0.18,0.22,400],["PS","G","I3",0.18,0.22,320],["PS","H","IF",0.18,0.22,1210],["PS","H","VVS1",0.18,0.22,1210],["PS","H","VVS2",0.18,0.22,1210],["PS","H","VS1",0.18,0.22,1020],["PS","H","VS2",0.18,0.22,1020],["PS","H","SI1",0.18,0.22,880],["PS","H","SI2",0.18,0.22,750],["PS","H","SI3",0.18,0.22,630],["PS","H","I1",0.18,0.22,520],["PS","H","I2",0.18,0.22,400],["PS","H","I3",0.18,0.22,320],["PS","I","IF",0.18,0.22,1000],["PS","I","VVS1",0.18,0.22,1000],["PS","I","VVS2",0.18,0.22,1000],["PS","I","VS1",0.18,0.22,850],["PS","I","VS2",0.18,0.22,850],["PS","I","SI1",0.18,0.22,750],["PS","I","SI2",0.18,0.22,650],["PS","I","SI3",0.18,0.22,540],["PS","I","I1",0.18,0.22,450],["PS","I","I2",0.18,0.22,350],["PS","I","I3",0.18,0.22,270],["PS","J","IF",0.18,0.22,1000],["PS","J","VVS1",0.18,0.22,1000],["PS","J","VVS2",0.18,0.22,1000],["PS","J","VS1",0.18,0.22,850],["PS","J","VS2",0.18,0.22,850],["PS","J","SI1",0.18,0.22,750],["PS","J","SI2",0.18,0.22,650],["PS","J","SI3",0.18,0.22,540],["PS","J","I1",0.18,0.22,450],["PS","J","I2",0.18,0.22,350],["PS","J","I3",0.18,0.22,270],["PS","K","IF",0.18,0.22,770],["PS","K","VVS1",0.18,0.22,770],["PS","K","VVS2",0.18,0.22,770],["PS","K","VS1",0.18,0.22,650],["PS","K","VS2",0.18,0.22,650],["PS","K","SI1",0.18,0.22,570],["PS","K","SI2",0.18,0.22,490],["PS","K","SI3",0.18,0.22,420],["PS","K","I1",0.18,0.22,350],["PS","K","I2",0.18,0.22,270],["PS","K","I3",0.18,0.22,210],["PS","L","IF",0.18,0.22,770],["PS","L","VVS1",0.18,0.22,770],["PS","L","VVS2",0.18,0.22,770],["PS","L","VS1",0.18,0.22,650],["PS","L","VS2",0.18,0.22,650],["PS","L","SI1",0.18,0.22,570],["PS","L","SI2",0.18,0.22,490],["PS","L","SI3",0.18,0.22,420],["PS","L","I1",0.18,0.22,350],["PS","L","I2",0.18,0.22,270],["PS","L","I3",0.18,0.22,210],["PS","M","IF",0.18,0.22,600],["PS","M","VVS1",0.18,0.22,600],["PS","M","VVS2",0.18,0.22,600],["PS","M","VS1",0.18,0.22,510],["PS","M","VS2",0.18,0.22,510],["PS","M","SI1",0.18,0.22,430],["PS","M","SI2",0.18,0.22,370],["PS","M","SI3",0.18,0.22,320],["PS","M","I1",0.18,0.22,260],["PS","M","I2",0.18,0.22,200],["PS","M","I3",0.18,0.22,150],["PS","N","IF",0.18,0.22,600],["PS","N","VVS1",0.18,0.22,600],["PS","N","VVS2",0.18,0.22,600],["PS","N","VS1",0.18,0.22,510],["PS","N","VS2",0.18,0.22,510],["PS","N","SI1",0.18,0.22,430],["PS","N","SI2",0.18,0.22,370],["PS","N","SI3",0.18,0.22,320],["PS","N","I1",0.18,0.22,260],["PS","N","I2",0.18,0.22,200],["PS","N","I3",0.18,0.22,150],["PS","D","IF",0.23,0.29,1610],["PS","D","VVS1",0.23,0.29,1610],["PS","D","VVS2",0.23,0.29,1610],["PS","D","VS1",0.23,0.29,1400],["PS","D","VS2",0.23,0.29,1400],["PS","D","SI1",0.23,0.29,1130],["PS","D","SI2",0.23,0.29,970],["PS","D","SI3",0.23,0.29,820],["PS","D","I1",0.23,0.29,660],["PS","D","I2",0.23,0.29,510],["PS","D","I3",0.23,0.29,400],["PS","E","IF",0.23,0.29,1610],["PS","E","VVS1",0.23,0.29,1610],["PS","E","VVS2",0.23,0.29,1610],["PS","E","VS1",0.23,0.29,1400],["PS","E","VS2",0.23,0.29,1400],["PS","E","SI1",0.23,0.29,1130],["PS","E","SI2",0.23,0.29,970],["PS","E","SI3",0.23,0.29,820],["PS","E","I1",0.23,0.29,660],["PS","E","I2",0.23,0.29,510],["PS","E","I3",0.23,0.29,400],["PS","F","IF",0.23,0.29,1610],["PS","F","VVS1",0.23,0.29,1610],["PS","F","VVS2",0.23,0.29,1610],["PS","F","VS1",0.23,0.29,1400],["PS","F","VS2",0.23,0.29,1400],["PS","F","SI1",0.23,0.29,1130],["PS","F","SI2",0.23,0.29,970],["PS","F","SI3",0.23,0.29,820],["PS","F","I1",0.23,0.29,660],["PS","F","I2",0.23,0.29,510],["PS","F","I3",0.23,0.29,400],["PS","G","IF",0.23,0.29,1410],["PS","G","VVS1",0.23,0.29,1410],["PS","G","VVS2",0.23,0.29,1410],["PS","G","VS1",0.23,0.29,1210],["PS","G","VS2",0.23,0.29,1210],["PS","G","SI1",0.23,0.29,990],["PS","G","SI2",0.23,0.29,840],["PS","G","SI3",0.23,0.29,720],["PS","G","I1",0.23,0.29,570],["PS","G","I2",0.23,0.29,450],["PS","G","I3",0.23,0.29,350],["PS","H","IF",0.23,0.29,1410],["PS","H","VVS1",0.23,0.29,1410],["PS","H","VVS2",0.23,0.29,1410],["PS","H","VS1",0.23,0.29,1210],["PS","H","VS2",0.23,0.29,1210],["PS","H","SI1",0.23,0.29,990],["PS","H","SI2",0.23,0.29,840],["PS","H","SI3",0.23,0.29,720],["PS","H","I1",0.23,0.29,570],["PS","H","I2",0.23,0.29,450],["PS","H","I3",0.23,0.29,350],["PS","I","IF",0.23,0.29,1180],["PS","I","VVS1",0.23,0.29,1180],["PS","I","VVS2",0.23,0.29,1180],["PS","I","VS1",0.23,0.29,1020],["PS","I","VS2",0.23,0.29,1020],["PS","I","SI1",0.23,0.29,840],["PS","I","SI2",0.23,0.29,720],["PS","I","SI3",0.23,0.29,630],["PS","I","I1",0.23,0.29,490],["PS","I","I2",0.23,0.29,390],["PS","I","I3",0.23,0.29,300],["PS","J","IF",0.23,0.29,1180],["PS","J","VVS1",0.23,0.29,1180],["PS","J","VVS2",0.23,0.29,1180],["PS","J","VS1",0.23,0.29,1020],["PS","J","VS2",0.23,0.29,1020],["PS","J","SI1",0.23,0.29,840],["PS","J","SI2",0.23,0.29,720],["PS","J","SI3",0.23,0.29,630],["PS","J","I1",0.23,0.29,490],["PS","J","I2",0.23,0.29,390],["PS","J","I3",0.23,0.29,300],["PS","K","IF",0.23,0.29,940],["PS","K","VVS1",0.23,0.29,940],["PS","K","VVS2",0.23,0.29,940],["PS","K","VS1",0.23,0.29,820],["PS","K","VS2",0.23,0.29,820],["PS","K","SI1",0.23,0.29,670],["PS","K","SI2",0.23,0.29,590],["PS","K","SI3",0.23,0.29,510],["PS","K","I1",0.23,0.29,390],["PS","K","I2",0.23,0.29,310],["PS","K","I3",0.23,0.29,230],["PS","L","IF",0.23,0.29,940],["PS","L","VVS1",0.23,0.29,940],["PS","L","VVS2",0.23,0.29,940],["PS","L","VS1",0.23,0.29,820],["PS","L","VS2",0.23,0.29,820],["PS","L","SI1",0.23,0.29,670],["PS","L","SI2",0.23,0.29,590],["PS","L","SI3",0.23,0.29,510],["PS","L","I1",0.23,0.29,390],["PS","L","I2",0.23,0.29,310],["PS","L","I3",0.23,0.29,230],["PS","M","IF",0.23,0.29,780],["PS","M","VVS1",0.23,0.29,780],["PS","M","VVS2",0.23,0.29,780],["PS","M","VS1",0.23,0.29,660],["PS","M","VS2",0.23,0.29,660],["PS","M","SI1",0.23,0.29,550],["PS","M","SI2",0.23,0.29,480],["PS","M","SI3",0.23,0.29,420],["PS","M","I1",0.23,0.29,310],["PS","M","I2",0.23,0.29,240],["PS","M","I3",0.23,0.29,170],["PS","N","IF",0.23,0.29,780],["PS","N","VVS1",0.23,0.29,780],["PS","N","VVS2",0.23,0.29,780],["PS","N","VS1",0.23,0.29,660],["PS","N","VS2",0.23,0.29,660],["PS","N","SI1",0.23,0.29,550],["PS","N","SI2",0.23,0.29,480],["PS","N","SI3",0.23,0.29,420],["PS","N","I1",0.23,0.29,310],["PS","N","I2",0.23,0.29,240],["PS","N","I3",0.23,0.29,170],["PS","D","IF",0.3,0.39,2500],["PS","D","VVS1",0.3,0.39,2300],["PS","D","VVS2",0.3,0.39,2100],["PS","D","VS1",0.3,0.39,1900],["PS","D","VS2",0.3,0.39,1800],["PS","D","SI1",0.3,0.39,1600],["PS","D","SI2",0.3,0.39,1400],["PS","D","SI3",0.3,0.39,1200],["PS","D","I1",0.3,0.39,1000],["PS","D","I2",0.3,0.39,800],["PS","D","I3",0.3,0.39,600],["PS","E","IF",0.3,0.39,2300],["PS","E","VVS1",0.3,0.39,2100],["PS","E","VVS2",0.3,0.39,1900],["PS","E","VS1",0.3,0.39,1800],["PS","E","VS2",0.3,0.39,1700],["PS","E","SI1",0.3,0.39,1500],["PS","E","SI2",0.3,0.39,1300],["PS","E","SI3",0.3,0.39,1100],["PS","E","I1",0.3,0.39,900],["PS","E","I2",0.3,0.39,800],["PS","E","I3",0.3,0.39,500],["PS","F","IF",0.3,0.39,2100],["PS","F","VVS1",0.3,0.39,1900],["PS","F","VVS2",0.3,0.39,1800],["PS","F","VS1",0.3,0.39,1700],["PS","F","VS2",0.3,0.39,1600],["PS","F","SI1",0.3,0.39,1400],["PS","F","SI2",0.3,0.39,1200],["PS","F","SI3",0.3,0.39,1000],["PS","F","I1",0.3,0.39,800],["PS","F","I2",0.3,0.39,700],["PS","F","I3",0.3,0.39,500],["PS","G","IF",0.3,0.39,1900],["PS","G","VVS1",0.3,0.39,1800],["PS","G","VVS2",0.3,0.39,1700],["PS","G","VS1",0.3,0.39,1600],["PS","G","VS2",0.3,0.39,1500],["PS","G","SI1",0.3,0.39,1300],["PS","G","SI2",0.3,0.39,1100],["PS","G","SI3",0.3,0.39,900],["PS","G","I1",0.3,0.39,800],["PS","G","I2",0.3,0.39,700],["PS","G","I3",0.3,0.39,400],["PS","H","IF",0.3,0.39,1800],["PS","H","VVS1",0.3,0.39,1700],["PS","H","VVS2",0.3,0.39,1600],["PS","H","VS1",0.3,0.39,1500],["PS","H","VS2",0.3,0.39,1400],["PS","H","SI1",0.3,0.39,1200],["PS","H","SI2",0.3,0.39,1000],["PS","H","SI3",0.3,0.39,800],["PS","H","I1",0.3,0.39,700],["PS","H","I2",0.3,0.39,600],["PS","H","I3",0.3,0.39,400],["PS","I","IF",0.3,0.39,1600],["PS","I","VVS1",0.3,0.39,1500],["PS","I","VVS2",0.3,0.39,1400],["PS","I","VS1",0.3,0.39,1300],["PS","I","VS2",0.3,0.39,1200],["PS","I","SI1",0.3,0.39,1000],["PS","I","SI2",0.3,0.39,900],["PS","I","SI3",0.3,0.39,800],["PS","I","I1",0.3,0.39,700],["PS","I","I2",0.3,0.39,600],["PS","I","I3",0.3,0.39,400],["PS","J","IF",0.3,0.39,1400],["PS","J","VVS1",0.3,0.39,1300],["PS","J","VVS2",0.3,0.39,1200],["PS","J","VS1",0.3,0.39,1100],["PS","J","VS2",0.3,0.39,1000],["PS","J","SI1",0.3,0.39,900],["PS","J","SI2",0.3,0.39,800],["PS","J","SI3",0.3,0.39,700],["PS","J","I1",0.3,0.39,600],["PS","J","I2",0.3,0.39,500],["PS","J","I3",0.3,0.39,300],["PS","K","IF",0.3,0.39,1200],["PS","K","VVS1",0.3,0.39,1100],["PS","K","VVS2",0.3,0.39,1000],["PS","K","VS1",0.3,0.39,900],["PS","K","VS2",0.3,0.39,900],["PS","K","SI1",0.3,0.39,800],["PS","K","SI2",0.3,0.39,700],["PS","K","SI3",0.3,0.39,700],["PS","K","I1",0.3,0.39,600],["PS","K","I2",0.3,0.39,500],["PS","K","I3",0.3,0.39,300],["PS","L","IF",0.3,0.39,1000],["PS","L","VVS1",0.3,0.39,900],["PS","L","VVS2",0.3,0.39,900],["PS","L","VS1",0.3,0.39,800],["PS","L","VS2",0.3,0.39,800],["PS","L","SI1",0.3,0.39,800],["PS","L","SI2",0.3,0.39,700],["PS","L","SI3",0.3,0.39,600],["PS","L","I1",0.3,0.39,500],["PS","L","I2",0.3,0.39,400],["PS","L","I3",0.3,0.39,200],["PS","M","IF",0.3,0.39,900],["PS","M","VVS1",0.3,0.39,900],["PS","M","VVS2",0.3,0.39,900],["PS","M","VS1",0.3,0.39,800],["PS","M","VS2",0.3,0.39,800],["PS","M","SI1",0.3,0.39,700],["PS","M","SI2",0.3,0.39,600],["PS","M","SI3",0.3,0.39,500],["PS","M","I1",0.3,0.39,400],["PS","M","I2",0.3,0.39,300],["PS","M","I3",0.3,0.39,200],["PS","D","IF",0.4,0.49,2900],["PS","D","VVS1",0.4,0.49,2600],["PS","D","VVS2",0.4,0.49,2400],["PS","D","VS1",0.4,0.49,2200],["PS","D","VS2",0.4,0.49,2000],["PS","D","SI1",0.4,0.49,1800],["PS","D","SI2",0.4,0.49,1600],["PS","D","SI3",0.4,0.49,1400],["PS","D","I1",0.4,0.49,1200],["PS","D","I2",0.4,0.49,900],["PS","D","I3",0.4,0.49,700],["PS","E","IF",0.4,0.49,2700],["PS","E","VVS1",0.4,0.49,2400],["PS","E","VVS2",0.4,0.49,2200],["PS","E","VS1",0.4,0.49,2000],["PS","E","VS2",0.4,0.49,1900],["PS","E","SI1",0.4,0.49,1700],["PS","E","SI2",0.4,0.49,1500],["PS","E","SI3",0.4,0.49,1300],["PS","E","I1",0.4,0.49,1100],["PS","E","I2",0.4,0.49,900],["PS","E","I3",0.4,0.49,600],["PS","F","IF",0.4,0.49,2500],["PS","F","VVS1",0.4,0.49,2300],["PS","F","VVS2",0.4,0.49,2100],["PS","F","VS1",0.4,0.49,1900],["PS","F","VS2",0.4,0.49,1800],["PS","F","SI1",0.4,0.49,1600],["PS","F","SI2",0.4,0.49,1400],["PS","F","SI3",0.4,0.49,1200],["PS","F","I1",0.4,0.49,1000],["PS","F","I2",0.4,0.49,800],["PS","F","I3",0.4,0.49,500],["PS","G","IF",0.4,0.49,2300],["PS","G","VVS1",0.4,0.49,2100],["PS","G","VVS2",0.4,0.49,1900],["PS","G","VS1",0.4,0.49,1800],["PS","G","VS2",0.4,0.49,1700],["PS","G","SI1",0.4,0.49,1500],["PS","G","SI2",0.4,0.49,1300],["PS","G","SI3",0.4,0.49,1100],["PS","G","I1",0.4,0.49,1000],["PS","G","I2",0.4,0.49,800],["PS","G","I3",0.4,0.49,500],["PS","H","IF",0.4,0.49,2100],["PS","H","VVS1",0.4,0.49,1900],["PS","H","VVS2",0.4,0.49,1800],["PS","H","VS1",0.4,0.49,1700],["PS","H","VS2",0.4,0.49,1600],["PS","H","SI1",0.4,0.49,1400],["PS","H","SI2",0.4,0.49,1200],["PS","H","SI3",0.4,0.49,1000],["PS","H","I1",0.4,0.49,900],["PS","H","I2",0.4,0.49,700],["PS","H","I3",0.4,0.49,500],["PS","I","IF",0.4,0.49,1900],["PS","I","VVS1",0.4,0.49,1700],["PS","I","VVS2",0.4,0.49,1600],["PS","I","VS1",0.4,0.49,1500],["PS","I","VS2",0.4,0.49,1400],["PS","I","SI1",0.4,0.49,1300],["PS","I","SI2",0.4,0.49,1100],["PS","I","SI3",0.4,0.49,1000],["PS","I","I1",0.4,0.49,800],["PS","I","I2",0.4,0.49,700],["PS","I","I3",0.4,0.49,400],["PS","J","IF",0.4,0.49,1600],["PS","J","VVS1",0.4,0.49,1500],["PS","J","VVS2",0.4,0.49,1400],["PS","J","VS1",0.4,0.49,1300],["PS","J","VS2",0.4,0.49,1300],["PS","J","SI1",0.4,0.49,1200],["PS","J","SI2",0.4,0.49,1100],["PS","J","SI3",0.4,0.49,900],["PS","J","I1",0.4,0.49,700],["PS","J","I2",0.4,0.49,600],["PS","J","I3",0.4,0.49,400],["PS","K","IF",0.4,0.49,1400],["PS","K","VVS1",0.4,0.49,1300],["PS","K","VVS2",0.4,0.49,1200],["PS","K","VS1",0.4,0.49,1100],["PS","K","VS2",0.4,0.49,1100],["PS","K","SI1",0.4,0.49,1000],["PS","K","SI2",0.4,0.49,900],["PS","K","SI3",0.4,0.49,800],["PS","K","I1",0.4,0.49,700],["PS","K","I2",0.4,0.49,600],["PS","K","I3",0.4,0.49,400],["PS","L","IF",0.4,0.49,1300],["PS","L","VVS1",0.4,0.49,1200],["PS","L","VVS2",0.4,0.49,1100],["PS","L","VS1",0.4,0.49,1000],["PS","L","VS2",0.4,0.49,1000],["PS","L","SI1",0.4,0.49,900],["PS","L","SI2",0.4,0.49,800],["PS","L","SI3",0.4,0.49,700],["PS","L","I1",0.4,0.49,600],["PS","L","I2",0.4,0.49,500],["PS","L","I3",0.4,0.49,300],["PS","M","IF",0.4,0.49,1200],["PS","M","VVS1",0.4,0.49,1100],["PS","M","VVS2",0.4,0.49,1000],["PS","M","VS1",0.4,0.49,900],["PS","M","VS2",0.4,0.49,900],["PS","M","SI1",0.4,0.49,800],["PS","M","SI2",0.4,0.49,700],["PS","M","SI3",0.4,0.49,600],["PS","M","I1",0.4,0.49,500],["PS","M","I2",0.4,0.49,400],["PS","M","I3",0.4,0.49,300],["PS","D","IF",0.5,0.69,3300],["PS","D","VVS1",0.5,0.69,3000],["PS","D","VVS2",0.5,0.69,2800],["PS","D","VS1",0.5,0.69,2600],["PS","D","VS2",0.5,0.69,2400],["PS","D","SI1",0.5,0.69,2200],["PS","D","SI2",0.5,0.69,2000],["PS","D","SI3",0.5,0.69,1800],["PS","D","I1",0.5,0.69,1600],["PS","D","I2",0.5,0.69,1300],["PS","D","I3",0.5,0.69,900],["PS","E","IF",0.5,0.69,3000],["PS","E","VVS1",0.5,0.69,2800],["PS","E","VVS2",0.5,0.69,2600],["PS","E","VS1",0.5,0.69,2500],["PS","E","VS2",0.5,0.69,2300],["PS","E","SI1",0.5,0.69,2100],["PS","E","SI2",0.5,0.69,1800],["PS","E","SI3",0.5,0.69,1700],["PS","E","I1",0.5,0.69,1500],["PS","E","I2",0.5,0.69,1200],["PS","E","I3",0.5,0.69,800],["PS","F","IF",0.5,0.69,2800],["PS","F","VVS1",0.5,0.69,2600],["PS","F","VVS2",0.5,0.69,2500],["PS","F","VS1",0.5,0.69,2400],["PS","F","VS2",0.5,0.69,2200],["PS","F","SI1",0.5,0.69,2000],["PS","F","SI2",0.5,0.69,1700],["PS","F","SI3",0.5,0.69,1600],["PS","F","I1",0.5,0.69,1400],["PS","F","I2",0.5,0.69,1100],["PS","F","I3",0.5,0.69,700],["PS","G","IF",0.5,0.69,2600],["PS","G","VVS1",0.5,0.69,2400],["PS","G","VVS2",0.5,0.69,2300],["PS","G","VS1",0.5,0.69,2200],["PS","G","VS2",0.5,0.69,2100],["PS","G","SI1",0.5,0.69,1900],["PS","G","SI2",0.5,0.69,1600],["PS","G","SI3",0.5,0.69,1500],["PS","G","I1",0.5,0.69,1300],["PS","G","I2",0.5,0.69,1000],["PS","G","I3",0.5,0.69,700],["PS","H","IF",0.5,0.69,2400],["PS","H","VVS1",0.5,0.69,2200],["PS","H","VVS2",0.5,0.69,2100],["PS","H","VS1",0.5,0.69,2000],["PS","H","VS2",0.5,0.69,1900],["PS","H","SI1",0.5,0.69,1800],["PS","H","SI2",0.5,0.69,1500],["PS","H","SI3",0.5,0.69,1400],["PS","H","I1",0.5,0.69,1200],["PS","H","I2",0.5,0.69,900],["PS","H","I3",0.5,0.69,700],["PS","I","IF",0.5,0.69,2200],["PS","I","VVS1",0.5,0.69,2000],["PS","I","VVS2",0.5,0.69,1900],["PS","I","VS1",0.5,0.69,1800],["PS","I","VS2",0.5,0.69,1700],["PS","I","SI1",0.5,0.69,1600],["PS","I","SI2",0.5,0.69,1400],["PS","I","SI3",0.5,0.69,1300],["PS","I","I1",0.5,0.69,1100],["PS","I","I2",0.5,0.69,900],["PS","I","I3",0.5,0.69,600],["PS","J","IF",0.5,0.69,1900],["PS","J","VVS1",0.5,0.69,1800],["PS","J","VVS2",0.5,0.69,1700],["PS","J","VS1",0.5,0.69,1600],["PS","J","VS2",0.5,0.69,1500],["PS","J","SI1",0.5,0.69,1400],["PS","J","SI2",0.5,0.69,1300],["PS","J","SI3",0.5,0.69,1200],["PS","J","I1",0.5,0.69,1000],["PS","J","I2",0.5,0.69,800],["PS","J","I3",0.5,0.69,600],["PS","K","IF",0.5,0.69,1700],["PS","K","VVS1",0.5,0.69,1600],["PS","K","VVS2",0.5,0.69,1500],["PS","K","VS1",0.5,0.69,1400],["PS","K","VS2",0.5,0.69,1300],["PS","K","SI1",0.5,0.69,1200],["PS","K","SI2",0.5,0.69,1100],["PS","K","SI3",0.5,0.69,1000],["PS","K","I1",0.5,0.69,900],["PS","K","I2",0.5,0.69,700],["PS","K","I3",0.5,0.69,600],["PS","L","IF",0.5,0.69,1500],["PS","L","VVS1",0.5,0.69,1400],["PS","L","VVS2",0.5,0.69,1300],["PS","L","VS1",0.5,0.69,1200],["PS","L","VS2",0.5,0.69,1100],["PS","L","SI1",0.5,0.69,1100],["PS","L","SI2",0.5,0.69,1000],["PS","L","SI3",0.5,0.69,900],["PS","L","I1",0.5,0.69,800],["PS","L","I2",0.5,0.69,700],["PS","L","I3",0.5,0.69,500],["PS","M","IF",0.5,0.69,1400],["PS","M","VVS1",0.5,0.69,1300],["PS","M","VVS2",0.5,0.69,1200],["PS","M","VS1",0.5,0.69,1100],["PS","M","VS2",0.5,0.69,1000],["PS","M","SI1",0.5,0.69,1000],["PS","M","SI2",0.5,0.69,900],["PS","M","SI3",0.5,0.69,800],["PS","M","I1",0.5,0.69,700],["PS","M","I2",0.5,0.69,600],["PS","M","I3",0.5,0.69,400],["PS","D","IF",0.7,0.89,4700],["PS","D","VVS1",0.7,0.89,4300],["PS","D","VVS2",0.7,0.89,4000],["PS","D","VS1",0.7,0.89,3700],["PS","D","VS2",0.7,0.89,3400],["PS","D","SI1",0.7,0.89,2800],["PS","D","SI2",0.7,0.89,2400],["PS","D","SI3",0.7,0.89,2200],["PS","D","I1",0.7,0.89,2000],["PS","D","I2",0.7,0.89,1600],["PS","D","I3",0.7,0.89,1000],["PS","E","IF",0.7,0.89,4300],["PS","E","VVS1",0.7,0.89,4000],["PS","E","VVS2",0.7,0.89,3800],["PS","E","VS1",0.7,0.89,3500],["PS","E","VS2",0.7,0.89,3200],["PS","E","SI1",0.7,0.89,2600],["PS","E","SI2",0.7,0.89,2200],["PS","E","SI3",0.7,0.89,2000],["PS","E","I1",0.7,0.89,1800],["PS","E","I2",0.7,0.89,1500],["PS","E","I3",0.7,0.89,900],["PS","F","IF",0.7,0.89,4000],["PS","F","VVS1",0.7,0.89,3800],["PS","F","VVS2",0.7,0.89,3600],["PS","F","VS1",0.7,0.89,3300],["PS","F","VS2",0.7,0.89,3000],["PS","F","SI1",0.7,0.89,2400],["PS","F","SI2",0.7,0.89,2000],["PS","F","SI3",0.7,0.89,1800],["PS","F","I1",0.7,0.89,1600],["PS","F","I2",0.7,0.89,1400],["PS","F","I3",0.7,0.89,900],["PS","G","IF",0.7,0.89,3700],["PS","G","VVS1",0.7,0.89,3500],["PS","G","VVS2",0.7,0.89,3300],["PS","G","VS1",0.7,0.89,3100],["PS","G","VS2",0.7,0.89,2800],["PS","G","SI1",0.7,0.89,2200],["PS","G","SI2",0.7,0.89,1800],["PS","G","SI3",0.7,0.89,1700],["PS","G","I1",0.7,0.89,1600],["PS","G","I2",0.7,0.89,1400],["PS","G","I3",0.7,0.89,800],["PS","H","IF",0.7,0.89,3400],["PS","H","VVS1",0.7,0.89,3200],["PS","H","VVS2",0.7,0.89,3000],["PS","H","VS1",0.7,0.89,2800],["PS","H","VS2",0.7,0.89,2500],["PS","H","SI1",0.7,0.89,2100],["PS","H","SI2",0.7,0.89,1700],["PS","H","SI3",0.7,0.89,1600],["PS","H","I1",0.7,0.89,1500],["PS","H","I2",0.7,0.89,1300],["PS","H","I3",0.7,0.89,800],["PS","I","IF",0.7,0.89,3100],["PS","I","VVS1",0.7,0.89,2900],["PS","I","VVS2",0.7,0.89,2700],["PS","I","VS1",0.7,0.89,2500],["PS","I","VS2",0.7,0.89,2200],["PS","I","SI1",0.7,0.89,2000],["PS","I","SI2",0.7,0.89,1600],["PS","I","SI3",0.7,0.89,1600],["PS","I","I1",0.7,0.89,1400],["PS","I","I2",0.7,0.89,1200],["PS","I","I3",0.7,0.89,800],["PS","J","IF",0.7,0.89,2600],["PS","J","VVS1",0.7,0.89,2500],["PS","J","VVS2",0.7,0.89,2300],["PS","J","VS1",0.7,0.89,2100],["PS","J","VS2",0.7,0.89,1900],["PS","J","SI1",0.7,0.89,1700],["PS","J","SI2",0.7,0.89,1600],["PS","J","SI3",0.7,0.89,1500],["PS","J","I1",0.7,0.89,1300],["PS","J","I2",0.7,0.89,1100],["PS","J","I3",0.7,0.89,700],["PS","K","IF",0.7,0.89,2200],["PS","K","VVS1",0.7,0.89,2100],["PS","K","VVS2",0.7,0.89,2000],["PS","K","VS1",0.7,0.89,1900],["PS","K","VS2",0.7,0.89,1800],["PS","K","SI1",0.7,0.89,1600],["PS","K","SI2",0.7,0.89,1500],["PS","K","SI3",0.7,0.89,1400],["PS","K","I1",0.7,0.89,1200],["PS","K","I2",0.7,0.89,1000],["PS","K","I3",0.7,0.89,700],["PS","L","IF",0.7,0.89,2000],["PS","L","VVS1",0.7,0.89,1900],["PS","L","VVS2",0.7,0.89,1800],["PS","L","VS1",0.7,0.89,1700],["PS","L","VS2",0.7,0.89,1600],["PS","L","SI1",0.7,0.89,1500],["PS","L","SI2",0.7,0.89,1400],["PS","L","SI3",0.7,0.89,1300],["PS","L","I1",0.7,0.89,1100],["PS","L","I2",0.7,0.89,800],["PS","L","I3",0.7,0.89,600],["PS","M","IF",0.7,0.89,1800],["PS","M","VVS1",0.7,0.89,1700],["PS","M","VVS2",0.7,0.89,1600],["PS","M","VS1",0.7,0.89,1500],["PS","M","VS2",0.7,0.89,1400],["PS","M","SI1",0.7,0.89,1300],["PS","M","SI2",0.7,0.89,1200],["PS","M","SI3",0.7,0.89,1100],["PS","M","I1",0.7,0.89,900],["PS","M","I2",0.7,0.89,700],["PS","M","I3",0.7,0.89,500],["PS","D","IF",0.9,0.99,6700],["PS","D","VVS1",0.9,0.99,6300],["PS","D","VVS2",0.9,0.99,5600],["PS","D","VS1",0.9,0.99,5200],["PS","D","VS2",0.9,0.99,4400],["PS","D","SI1",0.9,0.99,3700],["PS","D","SI2",0.9,0.99,3300],["PS","D","SI3",0.9,0.99,3000],["PS","D","I1",0.9,0.99,2400],["PS","D","I2",0.9,0.99,1800],["PS","D","I3",0.9,0.99,1100],["PS","E","IF",0.9,0.99,6200],["PS","E","VVS1",0.9,0.99,5700],["PS","E","VVS2",0.9,0.99,5200],["PS","E","VS1",0.9,0.99,4900],["PS","E","VS2",0.9,0.99,4200],["PS","E","SI1",0.9,0.99,3500],["PS","E","SI2",0.9,0.99,3100],["PS","E","SI3",0.9,0.99,2800],["PS","E","I1",0.9,0.99,2300],["PS","E","I2",0.9,0.99,1700],["PS","E","I3",0.9,0.99,1000],["PS","F","IF",0.9,0.99,5500],["PS","F","VVS1",0.9,0.99,5200],["PS","F","VVS2",0.9,0.99,4900],["PS","F","VS1",0.9,0.99,4600],["PS","F","VS2",0.9,0.99,4000],["PS","F","SI1",0.9,0.99,3300],["PS","F","SI2",0.9,0.99,2900],["PS","F","SI3",0.9,0.99,2600],["PS","F","I1",0.9,0.99,2200],["PS","F","I2",0.9,0.99,1600],["PS","F","I3",0.9,0.99,1000],["PS","G","IF",0.9,0.99,5200],["PS","G","VVS1",0.9,0.99,4900],["PS","G","VVS2",0.9,0.99,4600],["PS","G","VS1",0.9,0.99,4300],["PS","G","VS2",0.9,0.99,3800],["PS","G","SI1",0.9,0.99,3200],["PS","G","SI2",0.9,0.99,2700],["PS","G","SI3",0.9,0.99,2400],["PS","G","I1",0.9,0.99,2100],["PS","G","I2",0.9,0.99,1600],["PS","G","I3",0.9,0.99,900],["PS","H","IF",0.9,0.99,4800],["PS","H","VVS1",0.9,0.99,4500],["PS","H","VVS2",0.9,0.99,4200],["PS","H","VS1",0.9,0.99,3900],["PS","H","VS2",0.9,0.99,3500],["PS","H","SI1",0.9,0.99,3000],["PS","H","SI2",0.9,0.99,2500],["PS","H","SI3",0.9,0.99,2200],["PS","H","I1",0.9,0.99,2000],["PS","H","I2",0.9,0.99,1500],["PS","H","I3",0.9,0.99,900],["PS","I","IF",0.9,0.99,4100],["PS","I","VVS1",0.9,0.99,3900],["PS","I","VVS2",0.9,0.99,3700],["PS","I","VS1",0.9,0.99,3400],["PS","I","VS2",0.9,0.99,3100],["PS","I","SI1",0.9,0.99,2700],["PS","I","SI2",0.9,0.99,2300],["PS","I","SI3",0.9,0.99,2100],["PS","I","I1",0.9,0.99,1900],["PS","I","I2",0.9,0.99,1400],["PS","I","I3",0.9,0.99,900],["PS","J","IF",0.9,0.99,3600],["PS","J","VVS1",0.9,0.99,3400],["PS","J","VVS2",0.9,0.99,3200],["PS","J","VS1",0.9,0.99,3000],["PS","J","VS2",0.9,0.99,2700],["PS","J","SI1",0.9,0.99,2400],["PS","J","SI2",0.9,0.99,2100],["PS","J","SI3",0.9,0.99,1900],["PS","J","I1",0.9,0.99,1700],["PS","J","I2",0.9,0.99,1300],["PS","J","I3",0.9,0.99,800],["PS","K","IF",0.9,0.99,3000],["PS","K","VVS1",0.9,0.99,2800],["PS","K","VVS2",0.9,0.99,2600],["PS","K","VS1",0.9,0.99,2500],["PS","K","VS2",0.9,0.99,2300],["PS","K","SI1",0.9,0.99,2100],["PS","K","SI2",0.9,0.99,1900],["PS","K","SI3",0.9,0.99,1700],["PS","K","I1",0.9,0.99,1500],["PS","K","I2",0.9,0.99,1200],["PS","K","I3",0.9,0.99,800],["PS","L","IF",0.9,0.99,2400],["PS","L","VVS1",0.9,0.99,2300],["PS","L","VVS2",0.9,0.99,2200],["PS","L","VS1",0.9,0.99,2000],["PS","L","VS2",0.9,0.99,1900],["PS","L","SI1",0.9,0.99,1800],["PS","L","SI2",0.9,0.99,1600],["PS","L","SI3",0.9,0.99,1500],["PS","L","I1",0.9,0.99,1300],["PS","L","I2",0.9,0.99,1000],["PS","L","I3",0.9,0.99,700],["PS","M","IF",0.9,0.99,2000],["PS","M","VVS1",0.9,0.99,1900],["PS","M","VVS2",0.9,0.99,1800],["PS","M","VS1",0.9,0.99,1700],["PS","M","VS2",0.9,0.99,1600],["PS","M","SI1",0.9,0.99,1500],["PS","M","SI2",0.9,0.99,1400],["PS","M","SI3",0.9,0.99,1300],["PS","M","I1",0.9,0.99,1100],["PS","M","I2",0.9,0.99,900],["PS","M","I3",0.9,0.99,700],["PS","D","IF",1.0,1.49,9300],["PS","D","VVS1",1.0,1.49,8200],["PS","D","VVS2",1.0,1.49,7600],["PS","D","VS1",1.0,1.49,6700],["PS","D","VS2",1.0,1.49,5700],["PS","D","SI1",1.0,1.49,4600],["PS","D","SI2",1.0,1.49,3900],["PS","D","SI3",1.0,1.49,3500],["PS","D","I1",1.0,1.49,3100],["PS","D","I2",1.0,1.49,2100],["PS","D","I3",1.0,1.49,1300],["PS","E","IF",1.0,1.49,8200],["PS","E","VVS1",1.0,1.49,7500],["PS","E","VVS2",1.0,1.49,6900],["PS","E","VS1",1.0,1.49,6200],["PS","E","VS2",1.0,1.49,5400],["PS","E","SI1",1.0,1.49,4300],["PS","E","SI2",1.0,1.49,3700],["PS","E","SI3",1.0,1.49,3300],["PS","E","I1",1.0,1.49,2900],["PS","E","I2",1.0,1.49,2000],["PS","E","I3",1.0,1.49,1200],["PS","F","IF",1.0,1.49,7400],["PS","F","VVS1",1.0,1.49,6800],["PS","F","VVS2",1.0,1.49,6400],["PS","F","VS1",1.0,1.49,5800],["PS","F","VS2",1.0,1.49,5100],["PS","F","SI1",1.0,1.49,4000],["PS","F","SI2",1.0,1.49,3500],["PS","F","SI3",1.0,1.49,3100],["PS","F","I1",1.0,1.49,2800],["PS","F","I2",1.0,1.49,2000],["PS","F","I3",1.0,1.49,1100],["PS","G","IF",1.0,1.49,6600],["PS","G","VVS1",1.0,1.49,6200],["PS","G","VVS2",1.0,1.49,5800],["PS","G","VS1",1.0,1.49,5400],["PS","G","VS2",1.0,1.49,4800],["PS","G","SI1",1.0,1.49,3800],["PS","G","SI2",1.0,1.49,3300],["PS","G","SI3",1.0,1.49,2900],["PS","G","I1",1.0,1.49,2600],["PS","G","I2",1.0,1.49,1900],["PS","G","I3",1.0,1.49,1000],["PS","H","IF",1.0,1.49,5600],["PS","H","VVS1",1.0,1.49,5200],["PS","H","VVS2",1.0,1.49,4900],["PS","H","VS1",1.0,1.49,4600],["PS","H","VS2",1.0,1.49,4200],["PS","H","SI1",1.0,1.49,3600],["PS","H","SI2",1.0,1.49,3100],["PS","H","SI3",1.0,1.49,2700],["PS","H","I1",1.0,1.49,2400],["PS","H","I2",1.0,1.49,1800],["PS","H","I3",1.0,1.49,1000],["PS","I","IF",1.0,1.49,4700],["PS","I","VVS1",1.0,1.49,4400],["PS","I","VVS2",1.0,1.49,4200],["PS","I","VS1",1.0,1.49,3900],["PS","I","VS2",1.0,1.49,3700],["PS","I","SI1",1.0,1.49,3200],["PS","I","SI2",1.0,1.49,2800],["PS","I","SI3",1.0,1.49,2400],["PS","I","I1",1.0,1.49,2200],["PS","I","I2",1.0,1.49,1700],["PS","I","I3",1.0,1.49,1000],["PS","J","IF",1.0,1.49,4000],["PS","J","VVS1",1.0,1.49,3800],["PS","J","VVS2",1.0,1.49,3600],["PS","J","VS1",1.0,1.49,3400],["PS","J","VS2",1.0,1.49,3200],["PS","J","SI1",1.0,1.49,2900],["PS","J","SI2",1.0,1.49,2500],["PS","J","SI3",1.0,1.49,2200],["PS","J","I1",1.0,1.49,1900],["PS","J","I2",1.0,1.49,1500],["PS","J","I3",1.0,1.49,900],["PS","K","IF",1.0,1.49,3400],["PS","K","VVS1",1.0,1.49,3200],["PS","K","VVS2",1.0,1.49,3000],["PS","K","VS1",1.0,1.49,2800],["PS","K","VS2",1.0,1.49,2600],["PS","K","SI1",1.0,1.49,2400],["PS","K","SI2",1.0,1.49,2200],["PS","K","SI3",1.0,1.49,1900],["PS","K","I1",1.0,1.49,1700],["PS","K","I2",1.0,1.49,1400],["PS","K","I3",1.0,1.49,900],["PS","L","IF",1.0,1.49,2900],["PS","L","VVS1",1.0,1.49,2700],["PS","L","VVS2",1.0,1.49,2500],["PS","L","VS1",1.0,1.49,2300],["PS","L","VS2",1.0,1.49,2200],["PS","L","SI1",1.0,1.49,2000],["PS","L","SI2",1.0,1.49,1900],["PS","L","SI3",1.0,1.49,1800],["PS","L","I1",1.0,1.49,1600],["PS","L","I2",1.0,1.49,1200],["PS","L","I3",1.0,1.49,900],["PS","M","IF",1.0,1.49,2500],["PS","M","VVS1",1.0,1.49,2300],["PS","M","VVS2",1.0,1.49,2100],["PS","M","VS1",1.0,1.49,2000],["PS","M","VS2",1.0,1.49,1900],["PS","M","SI1",1.0,1.49,1800],["PS","M","SI2",1.0,1.49,1700],["PS","M","SI3",1.0,1.49,1600],["PS","M","I1",1.0,1.49,1300],["PS","M","I2",1.0,1.49,1000],["PS","M","I3",1.0,1.49,800],["PS","D","IF",1.5,1.99,14100],["PS","D","VVS1",1.5,1.99,13200],["PS","D","VVS2",1.5,1.99,12500],["PS","D","VS1",1.5,1.99,11600],["PS","D","VS2",1.5,1.99,9900],["PS","D","SI1",1.5,1.99,8100],["PS","D","SI2",1.5,1.99,6700],["PS","D","SI3",1.5,1.99,5900],["PS","D","I1",1.5,1.99,5100],["PS","D","I2",1.5,1.99,2700],["PS","D","I3",1.5,1.99,1500],["PS","E","IF",1.5,1.99,13200],["PS","E","VVS1",1.5,1.99,12400],["PS","E","VVS2",1.5,1.99,11600],["PS","E","VS1",1.5,1.99,10800],["PS","E","VS2",1.5,1.99,9300],["PS","E","SI1",1.5,1.99,7600],["PS","E","SI2",1.5,1.99,6300],["PS","E","SI3",1.5,1.99,5500],["PS","E","I1",1.5,1.99,4800],["PS","E","I2",1.5,1.99,2600],["PS","E","I3",1.5,1.99,1400],["PS","F","IF",1.5,1.99,12300],["PS","F","VVS1",1.5,1.99,11500],["PS","F","VVS2",1.5,1.99,10800],["PS","F","VS1",1.5,1.99,10200],["PS","F","VS2",1.5,1.99,8800],["PS","F","SI1",1.5,1.99,7200],["PS","F","SI2",1.5,1.99,6000],["PS","F","SI3",1.5,1.99,5100],["PS","F","I1",1.5,1.99,4500],["PS","F","I2",1.5,1.99,2500],["PS","F","I3",1.5,1.99,1300],["PS","G","IF",1.5,1.99,10900],["PS","G","VVS1",1.5,1.99,10500],["PS","G","VVS2",1.5,1.99,10000],["PS","G","VS1",1.5,1.99,9300],["PS","G","VS2",1.5,1.99,8200],["PS","G","SI1",1.5,1.99,6700],["PS","G","SI2",1.5,1.99,5600],["PS","G","SI3",1.5,1.99,4800],["PS","G","I1",1.5,1.99,4200],["PS","G","I2",1.5,1.99,2400],["PS","G","I3",1.5,1.99,1200],["PS","H","IF",1.5,1.99,9200],["PS","H","VVS1",1.5,1.99,8800],["PS","H","VVS2",1.5,1.99,8400],["PS","H","VS1",1.5,1.99,7900],["PS","H","VS2",1.5,1.99,7100],["PS","H","SI1",1.5,1.99,6200],["PS","H","SI2",1.5,1.99,5200],["PS","H","SI3",1.5,1.99,4500],["PS","H","I1",1.5,1.99,3900],["PS","H","I2",1.5,1.99,2300],["PS","H","I3",1.5,1.99,1100],["PS","I","IF",1.5,1.99,7900],["PS","I","VVS1",1.5,1.99,7500],["PS","I","VVS2",1.5,1.99,7200],["PS","I","VS1",1.5,1.99,6800],["PS","I","VS2",1.5,1.99,6300],["PS","I","SI1",1.5,1.99,5600],["PS","I","SI2",1.5,1.99,4800],["PS","I","SI3",1.5,1.99,4200],["PS","I","I1",1.5,1.99,3600],["PS","I","I2",1.5,1.99,2200],["PS","I","I3",1.5,1.99,1100],["PS","J","IF",1.5,1.99,6400],["PS","J","VVS1",1.5,1.99,6100],["PS","J","VVS2",1.5,1.99,5800],["PS","J","VS1",1.5,1.99,5500],["PS","J","VS2",1.5,1.99,5200],["PS","J","SI1",1.5,1.99,4800],["PS","J","SI2",1.5,1.99,4400],["PS","J","SI3",1.5,1.99,3800],["PS","J","I1",1.5,1.99,3300],["PS","J","I2",1.5,1.99,2000],["PS","J","I3",1.5,1.99,1100],["PS","K","IF",1.5,1.99,4900],["PS","K","VVS1",1.5,1.99,4700],["PS","K","VVS2",1.5,1.99,4500],["PS","K","VS1",1.5,1.99,4300],["PS","K","VS2",1.5,1.99,4100],["PS","K","SI1",1.5,1.99,3900],["PS","K","SI2",1.5,1.99,3700],["PS","K","SI3",1.5,1.99,3300],["PS","K","I1",1.5,1.99,2900],["PS","K","I2",1.5,1.99,1800],["PS","K","I3",1.5,1.99,1000],["PS","L","IF",1.5,1.99,4100],["PS","L","VVS1",1.5,1.99,3900],["PS","L","VVS2",1.5,1.99,3700],["PS","L","VS1",1.5,1.99,3600],["PS","L","VS2",1.5,1.99,3400],["PS","L","SI1",1.5,1.99,3200],["PS","L","SI2",1.5,1.99,3000],["PS","L","SI3",1.5,1.99,2800],["PS","L","I1",1.5,1.99,2600],["PS","L","I2",1.5,1.99,1600],["PS","L","I3",1.5,1.99,1000],["PS","M","IF",1.5,1.99,3500],["PS","M","VVS1",1.5,1.99,3300],["PS","M","VVS2",1.5,1.99,3200],["PS","M","VS1",1.5,1.99,3100],["PS","M","VS2",1.5,1.99,2900],["PS","M","SI1",1.5,1.99,2700],["PS","M","SI2",1.5,1.99,2500],["PS","M","SI3",1.5,1.99,2400],["PS","M","I1",1.5,1.99,2200],["PS","M","I2",1.5,1.99,1500],["PS","M","I3",1.5,1.99,1000],["PS","D","IF",2.0,2.99,21500],["PS","D","VVS1",2.0,2.99,20000],["PS","D","VVS2",2.0,2.99,18500],["PS","D","VS1",2.0,2.99,17500],["PS","D","VS2",2.0,2.99,16000],["PS","D","SI1",2.0,2.99,13500],["PS","D","SI2",2.0,2.99,10300],["PS","D","SI3",2.0,2.99,8200],["PS","D","I1",2.0,2.99,6900],["PS","D","I2",2.0,2.99,3000],["PS","D","I3",2.0,2.99,1600],["PS","E","IF",2.0,2.99,20000],["PS","E","VVS1",2.0,2.99,18500],["PS","E","VVS2",2.0,2.99,17000],["PS","E","VS1",2.0,2.99,16000],["PS","E","VS2",2.0,2.99,15000],["PS","E","SI1",2.0,2.99,12500],["PS","E","SI2",2.0,2.99,9600],["PS","E","SI3",2.0,2.99,7800],["PS","E","I1",2.0,2.99,6400],["PS","E","I2",2.0,2.99,2900],["PS","E","I3",2.0,2.99,1500],["PS","F","IF",2.0,2.99,18500],["PS","F","VVS1",2.0,2.99,17000],["PS","F","VVS2",2.0,2.99,16000],["PS","F","VS1",2.0,2.99,15000],["PS","F","VS2",2.0,2.99,14000],["PS","F","SI1",2.0,2.99,11700],["PS","F","SI2",2.0,2.99,9100],["PS","F","SI3",2.0,2.99,7400],["PS","F","I1",2.0,2.99,5900],["PS","F","I2",2.0,2.99,2800],["PS","F","I3",2.0,2.99,1400],["PS","G","IF",2.0,2.99,17000],["PS","G","VVS1",2.0,2.99,16000],["PS","G","VVS2",2.0,2.99,15000],["PS","G","VS1",2.0,2.99,14000],["PS","G","VS2",2.0,2.99,13000],["PS","G","SI1",2.0,2.99,10700],["PS","G","SI2",2.0,2.99,8600],["PS","G","SI3",2.0,2.99,7000],["PS","G","I1",2.0,2.99,5500],["PS","G","I2",2.0,2.99,2700],["PS","G","I3",2.0,2.99,1300],["PS","H","IF",2.0,2.99,13500],["PS","H","VVS1",2.0,2.99,12500],["PS","H","VVS2",2.0,2.99,12000],["PS","H","VS1",2.0,2.99,11500],["PS","H","VS2",2.0,2.99,11000],["PS","H","SI1",2.0,2.99,9900],["PS","H","SI2",2.0,2.99,8200],["PS","H","SI3",2.0,2.99,6400],["PS","H","I1",2.0,2.99,5100],["PS","H","I2",2.0,2.99,2500],["PS","H","I3",2.0,2.99,1200],["PS","I","IF",2.0,2.99,10800],["PS","I","VVS1",2.0,2.99,10400],["PS","I","VVS2",2.0,2.99,9900],["PS","I","VS1",2.0,2.99,9500],["PS","I","VS2",2.0,2.99,9000],["PS","I","SI1",2.0,2.99,8500],["PS","I","SI2",2.0,2.99,7500],["PS","I","SI3",2.0,2.99,5700],["PS","I","I1",2.0,2.99,4800],["PS","I","I2",2.0,2.99,2400],["PS","I","I3",2.0,2.99,1200],["PS","J","IF",2.0,2.99,8800],["PS","J","VVS1",2.0,2.99,8400],["PS","J","VVS2",2.0,2.99,8100],["PS","J","VS1",2.0,2.99,7700],["PS","J","VS2",2.0,2.99,7400],["PS","J","SI1",2.0,2.99,7000],["PS","J","SI2",2.0,2.99,6300],["PS","J","SI3",2.0,2.99,5100],["PS","J","I1",2.0,2.99,4500],["PS","J","I2",2.0,2.99,2200],["PS","J","I3",2.0,2.99,1200],["PS","K","IF",2.0,2.99,7000],["PS","K","VVS1",2.0,2.99,6600],["PS","K","VVS2",2.0,2.99,6300],["PS","K","VS1",2.0,2.99,6000],["PS","K","VS2",2.0,2.99,5800],["PS","K","SI1",2.0,2.99,5500],["PS","K","SI2",2.0,2.99,5100],["PS","K","SI3",2.0,2.99,4300],["PS","K","I1",2.0,2.99,3700],["PS","K","I2",2.0,2.99,2100],["PS","K","I3",2.0,2.99,1100],["PS","L","IF",2.0,2.99,5400],["PS","L","VVS1",2.0,2.99,5100],["PS","L","VVS2",2.0,2.99,4900],["PS","L","VS1",2.0,2.99,4700],["PS","L","VS2",2.0,2.99,4500],["PS","L","SI1",2.0,2.99,4300],["PS","L","SI2",2.0,2.99,4100],["PS","L","SI3",2.0,2.99,3600],["PS","L","I1",2.0,2.99,3300],["PS","L","I2",2.0,2.99,1900],["PS","L","I3",2.0,2.99,1100],["PS","M","IF",2.0,2.99,4500],["PS","M","VVS1",2.0,2.99,4200],["PS","M","VVS2",2.0,2.99,4000],["PS","M","VS1",2.0,2.99,3800],["PS","M","VS2",2.0,2.99,3600],["PS","M","SI1",2.0,2.99,3500],["PS","M","SI2",2.0,2.99,3300],["PS","M","SI3",2.0,2.99,2900],["PS","M","I1",2.0,2.99,2700],["PS","M","I2",2.0,2.99,1800],["PS","M","I3",2.0,2.99,1000],["PS","D","IF",3.0,3.99,42000],["PS","D","VVS1",3.0,3.99,35500],["PS","D","VVS2",3.0,3.99,32500],["PS","D","VS1",3.0,3.99,30000],["PS","D","VS2",3.0,3.99,27000],["PS","D","SI1",3.0,3.99,23000],["PS","D","SI2",3.0,3.99,18000],["PS","D","SI3",3.0,3.99,12200],["PS","D","I1",3.0,3.99,8600],["PS","D","I2",3.0,3.99,3600],["PS","D","I3",3.0,3.99,1700],["PS","E","IF",3.0,3.99,36500],["PS","E","VVS1",3.0,3.99,32500],["PS","E","VVS2",3.0,3.99,29500],["PS","E","VS1",3.0,3.99,27500],["PS","E","VS2",3.0,3.99,25000],["PS","E","SI1",3.0,3.99,21500],["PS","E","SI2",3.0,3.99,17000],["PS","E","SI3",3.0,3.99,11200],["PS","E","I1",3.0,3.99,8000],["PS","E","I2",3.0,3.99,3300],["PS","E","I3",3.0,3.99,1600],["PS","F","IF",3.0,3.99,32500],["PS","F","VVS1",3.0,3.99,29500],["PS","F","VVS2",3.0,3.99,27000],["PS","F","VS1",3.0,3.99,25000],["PS","F","VS2",3.0,3.99,23000],["PS","F","SI1",3.0,3.99,20000],["PS","F","SI2",3.0,3.99,16000],["PS","F","SI3",3.0,3.99,10400],["PS","F","I1",3.0,3.99,7400],["PS","F","I2",3.0,3.99,3000],["PS","F","I3",3.0,3.99,1500],["PS","G","IF",3.0,3.99,29000],["PS","G","VVS1",3.0,3.99,26500],["PS","G","VVS2",3.0,3.99,24500],["PS","G","VS1",3.0,3.99,22500],["PS","G","VS2",3.0,3.99,21000],["PS","G","SI1",3.0,3.99,18500],["PS","G","SI2",3.0,3.99,15000],["PS","G","SI3",3.0,3.99,9500],["PS","G","I1",3.0,3.99,6700],["PS","G","I2",3.0,3.99,2900],["PS","G","I3",3.0,3.99,1500],["PS","H","IF",3.0,3.99,24000],["PS","H","VVS1",3.0,3.99,22500],["PS","H","VVS2",3.0,3.99,21000],["PS","H","VS1",3.0,3.99,19500],["PS","H","VS2",3.0,3.99,18500],["PS","H","SI1",3.0,3.99,16500],["PS","H","SI2",3.0,3.99,14000],["PS","H","SI3",3.0,3.99,8800],["PS","H","I1",3.0,3.99,6200],["PS","H","I2",3.0,3.99,2700],["PS","H","I3",3.0,3.99,1400],["PS","I","IF",3.0,3.99,19500],["PS","I","VVS1",3.0,3.99,18500],["PS","I","VVS2",3.0,3.99,17500],["PS","I","VS1",3.0,3.99,16500],["PS","I","VS2",3.0,3.99,15500],["PS","I","SI1",3.0,3.99,14500],["PS","I","SI2",3.0,3.99,12500],["PS","I","SI3",3.0,3.99,8100],["PS","I","I1",3.0,3.99,5700],["PS","I","I2",3.0,3.99,2600],["PS","I","I3",3.0,3.99,1400],["PS","J","IF",3.0,3.99,15400],["PS","J","VVS1",3.0,3.99,14200],["PS","J","VVS2",3.0,3.99,13500],["PS","J","VS1",3.0,3.99,12700],["PS","J","VS2",3.0,3.99,12100],["PS","J","SI1",3.0,3.99,11100],["PS","J","SI2",3.0,3.99,10200],["PS","J","SI3",3.0,3.99,7100],["PS","J","I1",3.0,3.99,5400],["PS","J","I2",3.0,3.99,2500],["PS","J","I3",3.0,3.99,1300],["PS","K","IF",3.0,3.99,11900],["PS","K","VVS1",3.0,3.99,11100],["PS","K","VVS2",3.0,3.99,10500],["PS","K","VS1",3.0,3.99,10000],["PS","K","VS2",3.0,3.99,9400],["PS","K","SI1",3.0,3.99,8800],["PS","K","SI2",3.0,3.99,8200],["PS","K","SI3",3.0,3.99,6100],["PS","K","I1",3.0,3.99,5000],["PS","K","I2",3.0,3.99,2400],["PS","K","I3",3.0,3.99,1300],["PS","L","IF",3.0,3.99,8900],["PS","L","VVS1",3.0,3.99,8300],["PS","L","VVS2",3.0,3.99,7900],["PS","L","VS1",3.0,3.99,7500],["PS","L","VS2",3.0,3.99,7100],["PS","L","SI1",3.0,3.99,6600],["PS","L","SI2",3.0,3.99,6200],["PS","L","SI3",3.0,3.99,5300],["PS","L","I1",3.0,3.99,4400],["PS","L","I2",3.0,3.99,2300],["PS","L","I3",3.0,3.99,1200],["PS","M","IF",3.0,3.99,6700],["PS","M","VVS1",3.0,3.99,6300],["PS","M","VVS2",3.0,3.99,6000],["PS","M","VS1",3.0,3.99,5700],["PS","M","VS2",3.0,3.99,5400],["PS","M","SI1",3.0,3.99,4900],["PS","M","SI2",3.0,3.99,4600],["PS","M","SI3",3.0,3.99,4100],["PS","M","I1",3.0,3.99,3600],["PS","M","I2",3.0,3.99,2100],["PS","M","I3",3.0,3.99,1100],["PS","D","IF",4.0,4.99,53500],["PS","D","VVS1",4.0,4.99,46000],["PS","D","VVS2",4.0,4.99,43500],["PS","D","VS1",4.0,4.99,40500],["PS","D","VS2",4.0,4.99,37500],["PS","D","SI1",4.0,4.99,28000],["PS","D","SI2",4.0,4.99,21000],["PS","D","SI3",4.0,4.99,13700],["PS","D","I1",4.0,4.99,9200],["PS","D","I2",4.0,4.99,3900],["PS","D","I3",4.0,4.99,1900],["PS","E","IF",4.0,4.99,46000],["PS","E","VVS1",4.0,4.99,42000],["PS","E","VVS2",4.0,4.99,40000],["PS","E","VS1",4.0,4.99,37500],["PS","E","VS2",4.0,4.99,34500],["PS","E","SI1",4.0,4.99,26500],["PS","E","SI2",4.0,4.99,20000],["PS","E","SI3",4.0,4.99,12900],["PS","E","I1",4.0,4.99,8800],["PS","E","I2",4.0,4.99,3700],["PS","E","I3",4.0,4.99,1700],["PS","F","IF",4.0,4.99,42000],["PS","F","VVS1",4.0,4.99,39000],["PS","F","VVS2",4.0,4.99,37000],["PS","F","VS1",4.0,4.99,34500],["PS","F","VS2",4.0,4.99,31500],["PS","F","SI1",4.0,4.99,25000],["PS","F","SI2",4.0,4.99,19000],["PS","F","SI3",4.0,4.99,11900],["PS","F","I1",4.0,4.99,8200],["PS","F","I2",4.0,4.99,3500],["PS","F","I3",4.0,4.99,1600],["PS","G","IF",4.0,4.99,37500],["PS","G","VVS1",4.0,4.99,34000],["PS","G","VVS2",4.0,4.99,32000],["PS","G","VS1",4.0,4.99,30000],["PS","G","VS2",4.0,4.99,27500],["PS","G","SI1",4.0,4.99,23500],["PS","G","SI2",4.0,4.99,18000],["PS","G","SI3",4.0,4.99,10900],["PS","G","I1",4.0,4.99,7700],["PS","G","I2",4.0,4.99,3200],["PS","G","I3",4.0,4.99,1600],["PS","H","IF",4.0,4.99,30500],["PS","H","VVS1",4.0,4.99,28500],["PS","H","VVS2",4.0,4.99,27000],["PS","H","VS1",4.0,4.99,25500],["PS","H","VS2",4.0,4.99,23500],["PS","H","SI1",4.0,4.99,20500],["PS","H","SI2",4.0,4.99,17000],["PS","H","SI3",4.0,4.99,10300],["PS","H","I1",4.0,4.99,7200],["PS","H","I2",4.0,4.99,2900],["PS","H","I3",4.0,4.99,1500],["PS","I","IF",4.0,4.99,25000],["PS","I","VVS1",4.0,4.99,23500],["PS","I","VVS2",4.0,4.99,22000],["PS","I","VS1",4.0,4.99,20500],["PS","I","VS2",4.0,4.99,19000],["PS","I","SI1",4.0,4.99,17500],["PS","I","SI2",4.0,4.99,15000],["PS","I","SI3",4.0,4.99,9500],["PS","I","I1",4.0,4.99,6600],["PS","I","I2",4.0,4.99,2800],["PS","I","I3",4.0,4.99,1500],["PS","J","IF",4.0,4.99,19500],["PS","J","VVS1",4.0,4.99,18500],["PS","J","VVS2",4.0,4.99,17500],["PS","J","VS1",4.0,4.99,16500],["PS","J","VS2",4.0,4.99,15500],["PS","J","SI1",4.0,4.99,14500],["PS","J","SI2",4.0,4.99,12500],["PS","J","SI3",4.0,4.99,8100],["PS","J","I1",4.0,4.99,6100],["PS","J","I2",4.0,4.99,2600],["PS","J","I3",4.0,4.99,1400],["PS","K","IF",4.0,4.99,15800],["PS","K","VVS1",4.0,4.99,14800],["PS","K","VVS2",4.0,4.99,13900],["PS","K","VS1",4.0,4.99,13200],["PS","K","VS2",4.0,4.99,12300],["PS","K","SI1",4.0,4.99,11500],["PS","K","SI2",4.0,4.99,10500],["PS","K","SI3",4.0,4.99,7000],["PS","K","I1",4.0,4.99,5600],["PS","K","I2",4.0,4.99,2500],["PS","K","I3",4.0,4.99,1400],["PS","L","IF",4.0,4.99,11300],["PS","L","VVS1",4.0,4.99,10600],["PS","L","VVS2",4.0,4.99,10000],["PS","L","VS1",4.0,4.99,9500],["PS","L","VS2",4.0,4.99,9000],["PS","L","SI1",4.0,4.99,8400],["PS","L","SI2",4.0,4.99,7700],["PS","L","SI3",4.0,4.99,5800],["PS","L","I1",4.0,4.99,4800],["PS","L","I2",4.0,4.99,2400],["PS","L","I3",4.0,4.99,1300],["PS","M","IF",4.0,4.99,8100],["PS","M","VVS1",4.0,4.99,7700],["PS","M","VVS2",4.0,4.99,7400],["PS","M","VS1",4.0,4.99,7100],["PS","M","VS2",4.0,4.99,6800],["PS","M","SI1",4.0,4.99,6400],["PS","M","SI2",4.0,4.99,6100],["PS","M","SI3",4.0,4.99,4700],["PS","M","I1",4.0,4.99,3900],["PS","M","I2",4.0,4.99,2200],["PS","M","I3",4.0,4.99,1200],["PS","D","IF",5.0,5.99,75000],["PS","D","VVS1",5.0,5.99,63500],["PS","D","VVS2",5.0,5.99,60000],["PS","D","VS1",5.0,5.99,57000],["PS","D","VS2",5.0,5.99,49000],["PS","D","SI1",5.0,5.99,37500],["PS","D","SI2",5.0,5.99,27000],["PS","D","SI3",5.0,5.99,14600],["PS","D","I1",5.0,5.99,10500],["PS","D","I2",5.0,5.99,4300],["PS","D","I3",5.0,5.99,2000],["PS","E","IF",5.0,5.99,63000],["PS","E","VVS1",5.0,5.99,58000],["PS","E","VVS2",5.0,5.99,55000],["PS","E","VS1",5.0,5.99,52500],["PS","E","VS2",5.0,5.99,45500],["PS","E","SI1",5.0,5.99,35000],["PS","E","SI2",5.0,5.99,25000],["PS","E","SI3",5.0,5.99,13900],["PS","E","I1",5.0,5.99,9500],["PS","E","I2",5.0,5.99,4000],["PS","E","I3",5.0,5.99,1800],["PS","F","IF",5.0,5.99,56500],["PS","F","VVS1",5.0,5.99,53500],["PS","F","VVS2",5.0,5.99,51000],["PS","F","VS1",5.0,5.99,48500],["PS","F","VS2",5.0,5.99,43000],["PS","F","SI1",5.0,5.99,32000],["PS","F","SI2",5.0,5.99,23500],["PS","F","SI3",5.0,5.99,12900],["PS","F","I1",5.0,5.99,8900],["PS","F","I2",5.0,5.99,3800],["PS","F","I3",5.0,5.99,1700],["PS","G","IF",5.0,5.99,50000],["PS","G","VVS1",5.0,5.99,47000],["PS","G","VVS2",5.0,5.99,44500],["PS","G","VS1",5.0,5.99,42500],["PS","G","VS2",5.0,5.99,36500],["PS","G","SI1",5.0,5.99,29500],["PS","G","SI2",5.0,5.99,22000],["PS","G","SI3",5.0,5.99,12400],["PS","G","I1",5.0,5.99,8400],["PS","G","I2",5.0,5.99,3600],["PS","G","I3",5.0,5.99,1700],["PS","H","IF",5.0,5.99,42000],["PS","H","VVS1",5.0,5.99,38500],["PS","H","VVS2",5.0,5.99,36500],["PS","H","VS1",5.0,5.99,33500],["PS","H","VS2",5.0,5.99,30000],["PS","H","SI1",5.0,5.99,25000],["PS","H","SI2",5.0,5.99,20500],["PS","H","SI3",5.0,5.99,11800],["PS","H","I1",5.0,5.99,8100],["PS","H","I2",5.0,5.99,3300],["PS","H","I3",5.0,5.99,1600],["PS","I","IF",5.0,5.99,32500],["PS","I","VVS1",5.0,5.99,30000],["PS","I","VVS2",5.0,5.99,27500],["PS","I","VS1",5.0,5.99,25500],["PS","I","VS2",5.0,5.99,23500],["PS","I","SI1",5.0,5.99,21000],["PS","I","SI2",5.0,5.99,18000],["PS","I","SI3",5.0,5.99,10700],["PS","I","I1",5.0,5.99,7700],["PS","I","I2",5.0,5.99,3000],["PS","I","I3",5.0,5.99,1600],["PS","J","IF",5.0,5.99,25000],["PS","J","VVS1",5.0,5.99,23000],["PS","J","VVS2",5.0,5.99,21500],["PS","J","VS1",5.0,5.99,20000],["PS","J","VS2",5.0,5.99,18500],["PS","J","SI1",5.0,5.99,17500],["PS","J","SI2",5.0,5.99,16000],["PS","J","SI3",5.0,5.99,9700],["PS","J","I1",5.0,5.99,7000],["PS","J","I2",5.0,5.99,2800],["PS","J","I3",5.0,5.99,1500],["PS","K","IF",5.0,5.99,19500],["PS","K","VVS1",5.0,5.99,18500],["PS","K","VVS2",5.0,5.99,17500],["PS","K","VS1",5.0,5.99,16500],["PS","K","VS2",5.0,5.99,15500],["PS","K","SI1",5.0,5.99,14500],["PS","K","SI2",5.0,5.99,13500],["PS","K","SI3",5.0,5.99,8800],["PS","K","I1",5.0,5.99,6500],["PS","K","I2",5.0,5.99,2700],["PS","K","I3",5.0,5.99,1500],["PS","L","IF",5.0,5.99,15000],["PS","L","VVS1",5.0,5.99,14000],["PS","L","VVS2",5.0,5.99,13500],["PS","L","VS1",5.0,5.99,13000],["PS","L","VS2",5.0,5.99,12500],["PS","L","SI1",5.0,5.99,12000],["PS","L","SI2",5.0,5.99,11000],["PS","L","SI3",5.0,5.99,7100],["PS","L","I1",5.0,5.99,5600],["PS","L","I2",5.0,5.99,2400],["PS","L","I3",5.0,5.99,1400],["PS","M","IF",5.0,5.99,11500],["PS","M","VVS1",5.0,5.99,11000],["PS","M","VVS2",5.0,5.99,10500],["PS","M","VS1",5.0,5.99,9500],["PS","M","VS2",5.0,5.99,9000],["PS","M","SI1",5.0,5.99,8500],["PS","M","SI2",5.0,5.99,8000],["PS","M","SI3",5.0,5.99,6100],["PS","M","I1",5.0,5.99,4600],["PS","M","I2",5.0,5.99,2300],["PS","M","I3",5.0,5.99,1300],["PS","D","IF",10.0,10.99,132000],["PS","D","VVS1",10.0,10.99,107500],["PS","D","VVS2",10.0,10.99,99000],["PS","D","VS1",10.0,10.99,92000],["PS","D","VS2",10.0,10.99,79500],["PS","D","SI1",10.0,10.99,57500],["PS","D","SI2",10.0,10.99,41000],["PS","D","SI3",10.0,10.99,20500],["PS","D","I1",10.0,10.99,12400],["PS","D","I2",10.0,10.99,5300],["PS","D","I3",10.0,10.99,2300],["PS","E","IF",10.0,10.99,107000],["PS","E","VVS1",10.0,10.99,96500],["PS","E","VVS2",10.0,10.99,90500],["PS","E","VS1",10.0,10.99,83500],["PS","E","VS2",10.0,10.99,72500],["PS","E","SI1",10.0,10.99,53500],["PS","E","SI2",10.0,10.99,39000],["PS","E","SI3",10.0,10.99,19500],["PS","E","I1",10.0,10.99,11700],["PS","E","I2",10.0,10.99,5000],["PS","E","I3",10.0,10.99,2200],["PS","F","IF",10.0,10.99,94500],["PS","F","VVS1",10.0,10.99,88500],["PS","F","VVS2",10.0,10.99,83500],["PS","F","VS1",10.0,10.99,76500],["PS","F","VS2",10.0,10.99,66500],["PS","F","SI1",10.0,10.99,49500],["PS","F","SI2",10.0,10.99,36500],["PS","F","SI3",10.0,10.99,18500],["PS","F","I1",10.0,10.99,11100],["PS","F","I2",10.0,10.99,4800],["PS","F","I3",10.0,10.99,2100],["PS","G","IF",10.0,10.99,79000],["PS","G","VVS1",10.0,10.99,74500],["PS","G","VVS2",10.0,10.99,69500],["PS","G","VS1",10.0,10.99,65000],["PS","G","VS2",10.0,10.99,57500],["PS","G","SI1",10.0,10.99,46000],["PS","G","SI2",10.0,10.99,34000],["PS","G","SI3",10.0,10.99,17000],["PS","G","I1",10.0,10.99,10600],["PS","G","I2",10.0,10.99,4600],["PS","G","I3",10.0,10.99,2000],["PS","H","IF",10.0,10.99,65500],["PS","H","VVS1",10.0,10.99,61000],["PS","H","VVS2",10.0,10.99,57000],["PS","H","VS1",10.0,10.99,53000],["PS","H","VS2",10.0,10.99,46500],["PS","H","SI1",10.0,10.99,39500],["PS","H","SI2",10.0,10.99,30500],["PS","H","SI3",10.0,10.99,16000],["PS","H","I1",10.0,10.99,10100],["PS","H","I2",10.0,10.99,4400],["PS","H","I3",10.0,10.99,1900],["PS","I","IF",10.0,10.99,51000],["PS","I","VVS1",10.0,10.99,47500],["PS","I","VVS2",10.0,10.99,44000],["PS","I","VS1",10.0,10.99,40500],["PS","I","VS2",10.0,10.99,37000],["PS","I","SI1",10.0,10.99,33000],["PS","I","SI2",10.0,10.99,26000],["PS","I","SI3",10.0,10.99,15000],["PS","I","I1",10.0,10.99,9700],["PS","I","I2",10.0,10.99,4200],["PS","I","I3",10.0,10.99,1800],["PS","J","IF",10.0,10.99,39500],["PS","J","VVS1",10.0,10.99,37000],["PS","J","VVS2",10.0,10.99,34500],["PS","J","VS1",10.0,10.99,31500],["PS","J","VS2",10.0,10.99,28500],["PS","J","SI1",10.0,10.99,25500],["PS","J","SI2",10.0,10.99,22000],["PS","J","SI3",10.0,10.99,13500],["PS","J","I1",10.0,10.99,9100],["PS","J","I2",10.0,10.99,4000],["PS","J","I3",10.0,10.99,1700],["PS","K","IF",10.0,10.99,31500],["PS","K","VVS1",10.0,10.99,29500],["PS","K","VVS2",10.0,10.99,27500],["PS","K","VS1",10.0,10.99,25000],["PS","K","VS2",10.0,10.99,23000],["PS","K","SI1",10.0,10.99,21000],["PS","K","SI2",10.0,10.99,18500],["PS","K","SI3",10.0,10.99,12000],["PS","K","I1",10.0,10.99,8600],["PS","K","I2",10.0,10.99,3800],["PS","K","I3",10.0,10.99,1600],["PS","L","IF",10.0,10.99,23000],["PS","L","VVS1",10.0,10.99,21500],["PS","L","VVS2",10.0,10.99,20500],["PS","L","VS1",10.0,10.99,19000],["PS","L","VS2",10.0,10.99,17500],["PS","L","SI1",10.0,10.99,16000],["PS","L","SI2",10.0,10.99,14000],["PS","L","SI3",10.0,10.99,10500],["PS","L","I1",10.0,10.99,7700],["PS","L","I2",10.0,10.99,3600],["PS","L","I3",10.0,10.99,1600],["PS","M","IF",10.0,10.99,17500],["PS","M","VVS1",10.0,10.99,16500],["PS","M","VVS2",10.0,10.99,15500],["PS","M","VS1",10.0,10.99,14500],["PS","M","VS2",10.0,10.99,13500],["PS","M","SI1",10.0,10.99,12500],["PS","M","SI2",10.0,10.99,11500],["PS","M","SI3",10.0,10.99,9000],["PS","M","I1",10.0,10.99,6400],["PS","M","I2",10.0,10.99,3300],["PS","M","I3",10.0,10.99,1500]];
@@ -1191,16 +1619,24 @@ function openQuote(q){
   $("q_rap").value = q ? q.rap : "";
   $("q_disc").value = q ? q.discRaw : "";
   $("q_less").value = q && q.less ? q.less : "";
-  $("q_rate").value = q ? q.rate : (S.settings.rate || "");
+  var fx = S.settings.fx;
+  qRateManual = !!q && !(fx && q.rate === fx.rate);
+  $("q_rate").value = q ? q.rate : (fx ? fx.rate : (S.settings.rate || ""));
   $("q_pct").value = q && q.pct != null ? q.pct : S.settings.brokPct;
+  $("q_terms").value = q && q.terms != null ? q.terms : S.settings.terms;
+  $("q_date").value = q && q.dealDate ? q.dealDate : today();
+  syncDayPick("q_date");
   setSeg("q_via", q && q.via ? q.via : S.settings.via);
   $("q_seller").value = q ? (q.seller || "") : "";
   $("q_buyer").value = q ? (q.buyer || "") : "";
   $("quoteTitle").textContent = q ? "Price card · " + fmtDate(q.date) : "Price card";
   $("q_drop").hidden = !q;
   quoteUpdate(true);
+  termsHint();
+  fxState = "idle"; rateHint();
   $("dlgQuote").showModal();
   $("dlgQuote").querySelector(".sheet-b").scrollTop = 0;
+  if (!q) loadFx(false);
 }
 
 function qCalc(){
@@ -1217,6 +1653,8 @@ function qCalc(){
            perCt:perCt, total:total, amt:r2(total * rate),
            seller:up($("q_seller").value), buyer:up($("q_buyer").value),
            via: segVal("q_via"),
+           dealDate: $("q_date").value || today(),
+           terms: readDays("q_terms") == null ? "" : readDays("q_terms"),
            pct: $("q_pct").value.trim() === "" ? S.settings.brokPct : (parseFloat($("q_pct").value) || 0) };
 }
 function qDesc(c){ return [c.wt ? c.wt.toFixed(2) : "", c.color, c.clar, c.shape].filter(Boolean).join(" "); }
@@ -1244,7 +1682,13 @@ function quoteUpdate(now){
   clearTimeout(qTimer);
   qTimer = setTimeout(function(){ var cv = drawCard(c); $("q_card").src = cv.toDataURL("image/png"); cv.toBlob(function(b){ qBlob = b; }, "image/png"); }, now ? 0 : 120);
 }
-["q_wt","q_disc","q_less","q_rate"].forEach(function(id){ $(id).addEventListener("input", function(){ quoteUpdate(); }); });
+["q_wt","q_disc","q_less"].forEach(function(id){ $(id).addEventListener("input", function(){ quoteUpdate(); }); });
+function termsHint(){
+  var n = readDays("q_terms"), h = $("q_termsHint");
+  h.textContent = n == null ? ($("q_terms").value.trim() ? "Type a number" : "No due date") : "Due " + dueLabel(addDays($("q_date").value || today(), n));
+}
+$("q_terms").addEventListener("input", termsHint);
+$("q_date").addEventListener("input", function(){ if (!$("q_date").value) $("q_date").value = today(); termsHint(); });
 $("q_rap").addEventListener("input", function(){ qRapManual = true; quoteUpdate(); });
 $("q_rapHint").addEventListener("click", function(e){
   if (!e.target.closest("[data-uselist]")) return;
@@ -1284,10 +1728,14 @@ function drawCard(c){
   x.fillStyle = "#E4ECFB"; x.fillRect(0, 580, W, 80);
   x.fillStyle = BLUE; x.beginPath(); x.moveTo(40,605); x.lineTo(64,605); x.lineTo(72,617); x.lineTo(52,641); x.lineTo(32,617); x.closePath(); x.fill();
   x.textAlign = "left"; x.fillStyle = INK; x.font = "700 28px " + F; x.fillText(S.settings.firm || "Broker Book", 88, 630);
-  x.textAlign = "right"; x.font = "500 28px " + F; x.fillText(new Date().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" }), W - 36, 630);
+  x.textAlign = "right"; x.font = "500 28px " + F; x.fillText(stamp(new Date()), W - 36, 630);
   return cv;
 }
 function flag(id){ var el = $(id); el.focus(); el.scrollIntoView({ block:"center", behavior:"smooth" }); el.style.borderColor = "var(--pay)"; setTimeout(function(){ el.style.borderColor = ""; }, 2500); }
+function clock(d){ return d.toLocaleTimeString("en-IN", { hour:"numeric", minute:"2-digit", hour12:true }).replace(/\s?(am|pm)$/i, function(m){ return " " + m.trim().toLowerCase(); }); }
+function stamp(d){ return d.toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" }) + " · " + clock(d); }
+// keep the time on the open card current
+setInterval(function(){ if ($("dlgQuote").open) quoteUpdate(true); }, 30000);
 function qValid(c){
   if (!c.color || !c.clar){ toast("Pick colour and clarity."); return false; }
   if (!c.wt){ toast("Enter the weight."); flag("q_wt"); return false; }
@@ -1297,14 +1745,14 @@ function qValid(c){
 }
 function storeQuote(c){
   var q = editingQuote || { id: uid("Q"), ts: Date.now(), date: today() };
-  Object.assign(q, c);
+  Object.assign(q, c); q.ts = Date.now();
   if (!editingQuote){ S.quotes.unshift(q); editingQuote = q; }
   S.settings.rate = c.rate;
   save(); render();
   return q;
 }
 function quoteText(c){
-  return qDesc(c) + "\nRap " + usd(c.rap, 0) + " · " + (c.disc > 0 ? "+" : "") + c.disc + "%" + (c.less ? " · less " + c.less + "%" : "") +
+  return qDesc(c) + " · " + stamp(new Date()) + "\nRap " + usd(c.rap, 0) + " · " + (c.disc > 0 ? "+" : "") + c.disc + "%" + (c.less ? " · less " + c.less + "%" : "") +
     "\n" + usd(c.perCt, 0) + "/ct · Total " + usd(c.total) + "\n₹" + inr2(c.amt) + " @ " + c.rate;
 }
 $("q_share").addEventListener("click", function(){
@@ -1329,19 +1777,21 @@ function confirmQuote(q){
   var stone = qDesc(q) + " · " + usd(q.total) + " @" + q.rate;
   var pct = q.pct != null ? q.pct : S.settings.brokPct;
   if (!q.seller){   // need at least the supplier to book brokerage
-    openDeal(null, { buyer: q.buyer, amount: q.amt, stone: stone, brokFrom: "seller", via: q.via, pct: pct, quoteId: q.id });
+    openDeal(null, { buyer: q.buyer, amount: q.amt, stone: stone, brokFrom: "seller", via: q.via, pct: pct, terms: q.terms, date: q.dealDate, quoteId: q.id });
     toast("Add the supplier name to save this deal.");
     return;
   }
   if (q.seller === q.buyer){ openQuote(q); toast("Supplier and customer can't be the same."); return; }
   var brok = r2(q.amt * pct / 100);
-  var rec = { id: uid("D"), ts: Date.now(), date: today(), seller: q.seller, buyer: q.buyer || "",
+  var rec = { id: uid("D"), ts: Date.now(), date: q.dealDate || today(), seller: q.seller, buyer: q.buyer || "",
     amount: r2(q.amt), buyerAmount: q.buyer ? r2(q.amt) : 0, via: q.via || S.settings.via,
     brokPct: pct, brokFrom: "seller", brokSeller: brok, brokBuyer: 0, stone: stone };
+  var tq = q.terms !== undefined ? q.terms : S.settings.terms;
+  if (tq !== "" && tq != null && !isNaN(+tq)){ rec.dueDays = +tq; rec.due = addDays(rec.date, +tq); } else { rec.due = ""; rec.dueDays = null; }
   S.deals.push(rec);
   S.quotes = S.quotes.filter(function(x){ return x.id !== q.id; });
   save(); render();
-  toast("Deal saved: " + rec.seller + (rec.buyer ? " → " + rec.buyer : "") + " · " + inr(rec.amount) + " · brokerage " + inr(brok) + (rec.via === "direct" ? " · direct" : ""));
+  toast("Deal saved" + (rec.date !== today() ? " for " + fmtDate(rec.date) : "") + ": " + rec.seller + (rec.buyer ? " → " + rec.buyer : "") + " · " + inr(rec.amount) + " · brokerage " + inr(brok) + (rec.due ? " · due " + fmtDate(rec.due) : "") + (rec.via === "direct" ? " · direct" : ""));
 }
 $("q_done").addEventListener("click", quoteDone);
 function quoteDone(){
@@ -1351,7 +1801,7 @@ function quoteDone(){
   // Card not fully filled: still carry forward whatever is there
   $("dlgQuote").close();
   openDeal(null, { seller: c.seller, buyer: c.buyer, amount: c.total && c.rate ? c.amt : "",
-    stone: qDesc(c) + (c.total ? " · " + usd(c.total) : ""), brokFrom: "seller", via: c.via, pct: c.pct, quoteId: editingQuote ? editingQuote.id : null });
+    stone: qDesc(c) + (c.total ? " · " + usd(c.total) : ""), brokFrom: "seller", via: c.via, pct: c.pct, terms: c.terms, date: c.dealDate, quoteId: editingQuote ? editingQuote.id : null });
   if (!c.rate && c.total) toast("No ₹ rate on the card — type the ₹ amount.");
 }
 function dropQuote(id){
@@ -1371,7 +1821,7 @@ function renderQuotes(){
     var who = [q.seller, q.buyer].filter(Boolean).join(" → ");
     return '<div class="row"><button class="main" data-quote="' + q.id + '" style="border:0;background:none;text-align:left;padding:0">' +
       '<div class="t">' + esc(qDesc(q)) + ' · ₹' + Math.round(q.amt).toLocaleString("en-IN") + '</div>' +
-      '<div class="s">' + fmtDate(q.date) + (who ? " · " + esc(who) : "") + " · " + usd(q.perCt, 0) + '/ct</div></button>' +
+      '<div class="s">' + fmtDate(q.date) + (q.ts ? " " + clock(new Date(q.ts)) : "") + (who ? " · " + esc(who) : "") + " · " + usd(q.perCt, 0) + '/ct</div></button>' +
       '<div class="qrow-act"><button data-qdrop="' + q.id + '" aria-label="Drop">✕</button><button class="ok" data-qok="' + q.id + '">Done</button></div></div>';
   }).join("");
 }
