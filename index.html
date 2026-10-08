@@ -1216,7 +1216,19 @@ function download(name, blob){
   document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 $("mBackup").addEventListener("click", function(){
-  download("broker-book-backup-" + today() + ".json", new Blob([JSON.stringify(S, null, 1)], {type:"application/json"}));
+  var name = "broker-book-backup-" + today() + ".json";
+  var blob = new Blob([JSON.stringify(S, null, 1)], {type:"application/json"});
+  // Prefer native share (WhatsApp, email, Drive, etc.) when the browser supports file-sharing.
+  try {
+    var file = new File([blob], name, {type:"application/json"});
+    if (navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({ files:[file], title:"Broker Book backup", text:"My Broker Book backup — keep this file safe." })
+        .then(function(){ S.settings.lastBackup = today(); save(); toast("Backup sent."); })
+        .catch(function(){ /* user cancelled share — do not mark backed up */ });
+      return;
+    }
+  } catch(e){ /* fall through to download */ }
+  download(name, blob);
   S.settings.lastBackup = today(); save(); toast("Backup downloaded.");
 });
 $("mRestore").addEventListener("click", function(){ $("restoreFile").click(); });
@@ -1296,15 +1308,33 @@ function importOld(){
   toast("Brought in " + nd + " deals and " + nm + " money entries." + (jg ? " " + jg + " jangad stones not copied." : "") + (skipped ? " " + skipped + " 'Other' entries skipped." : ""));
 }
 $("mImport").addEventListener("click", function(){ $("dlgMenu").close(); importOld(); });
+var backupNudgeHidden = false; // session-only snooze; resets on app relaunch
 function renderImportBanner(){
   if (!CAN_SAVE){
     $("importBanner").innerHTML = '<div class="banner" style="background:var(--pay-soft)"><p><b>This window can\u2019t save.</b> You\u2019re in a preview, so entries disappear when it closes. Open the app\u2019s own link in Chrome or Safari, or add it to your home screen.</p></div>';
     return;
   }
   var o = oldData();
-  var show = o && (o.purchases || []).length && !S.settings.importedOld && !S.settings.hideImport && !S.deals.length;
-  $("importBanner").innerHTML = show ? '<div class="banner"><p>Your old register has ' + o.purchases.length + ' purchases on this device.</p><div style="display:flex;gap:8px"><button class="btn ghost" style="padding:8px 12px;font-size:14px" id="bnHide">Not now</button><button class="btn primary" style="padding:8px 12px;font-size:14px" id="bnImport">Bring them in</button></div></div>' : "";
-  if (show){ $("bnImport").onclick = importOld; $("bnHide").onclick = function(){ S.settings.hideImport = true; save(); render(); }; }
+  var showImport = o && (o.purchases || []).length && !S.settings.importedOld && !S.settings.hideImport && !S.deals.length;
+  if (showImport){
+    $("importBanner").innerHTML = '<div class="banner"><p>Your old register has ' + o.purchases.length + ' purchases on this device.</p><div style="display:flex;gap:8px"><button class="btn ghost" style="padding:8px 12px;font-size:14px" id="bnHide">Not now</button><button class="btn primary" style="padding:8px 12px;font-size:14px" id="bnImport">Bring them in</button></div></div>';
+    $("bnImport").onclick = importOld;
+    $("bnHide").onclick = function(){ S.settings.hideImport = true; save(); render(); };
+    return;
+  }
+  // Backup reminder: show when the broker has data and either never backed up, or backed up 7+ days ago.
+  var hasData = (S.deals || []).length || (S.money || []).length;
+  var last = S.settings.lastBackup;
+  var daysSince = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : 999;
+  var showBackup = hasData && daysSince >= 7 && !backupNudgeHidden;
+  if (showBackup){
+    var msg = last ? ("Last backup was " + daysSince + " days ago.") : "You haven\u2019t backed up yet.";
+    $("importBanner").innerHTML = '<div class="banner" style="background:var(--parcel-soft)"><p><b>Keep your data safe.</b> ' + msg + ' If this phone\u2019s Chrome data is cleared, your deals disappear with it.</p><div style="display:flex;gap:8px"><button class="btn ghost" style="padding:8px 12px;font-size:14px" id="bnBackupLater">Later</button><button class="btn primary" style="padding:8px 12px;font-size:14px" id="bnBackupNow">Backup now</button></div></div>';
+    $("bnBackupNow").onclick = function(){ $("mBackup").click(); };
+    $("bnBackupLater").onclick = function(){ backupNudgeHidden = true; render(); };
+    return;
+  }
+  $("importBanner").innerHTML = "";
 }
 
 /* ---------- actions & shortcuts ---------- */
@@ -1843,6 +1873,12 @@ if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
   window.addEventListener("load", function(){
     try { navigator.serviceWorker.register("sw.js").catch(function(){}); } catch(e){}
   });
+}
+
+// Ask the browser to protect this app's data from auto-eviction when storage runs low.
+// Chrome/Edge grants this silently for installed PWAs; Firefox prompts; iOS Safari limited.
+if (navigator.storage && navigator.storage.persist){
+  try { navigator.storage.persist(); } catch(e){}
 }
 })();
 </script>
